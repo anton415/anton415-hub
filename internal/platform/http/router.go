@@ -100,7 +100,7 @@ func NewRouter(deps Dependencies) http.Handler {
 		orchestratorN8N := orchestratorn8n.NewClient(orchestratorn8n.Config{
 			FeatureIntakeURL: deps.Config.OrchestratorN8NFeatureIntakeURL,
 			ApprovalURL:      deps.Config.OrchestratorN8NApprovalURL,
-			AuthToken:        deps.Config.OrchestratorN8NCallbackToken,
+			AuthToken:        deps.Config.OrchestratorN8NOutboundToken,
 		})
 		orchestratorService := orchestratorapp.NewService(orchestratorapp.Dependencies{
 			Repository: orchestratorRepository,

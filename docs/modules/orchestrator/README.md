@@ -64,6 +64,7 @@ Hub starts n8n with:
 
 - `ORCHESTRATOR_N8N_FEATURE_INTAKE_URL`
 - `ORCHESTRATOR_N8N_APPROVAL_URL`
+- `ORCHESTRATOR_N8N_OUTBOUND_TOKEN` for optional Hub -> n8n webhook authorization
 - `ORCHESTRATOR_N8N_CALLBACK_TOKEN`
 
 For local development, use `make orchestrator-dev` when testing the full Hub + n8n loop.

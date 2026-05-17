@@ -97,18 +97,10 @@ func TestServiceApprovesSpecAndNotifiesN8N(t *testing.T) {
 	store := newMemoryRepository()
 	n8n := &fakeN8N{}
 	service := NewService(Dependencies{Repository: store, N8N: n8n})
-	project := mustCreateProject(t, service)
-	detail, err := service.CreateWorkflow(context.Background(), CreateWorkflowInput{
-		ProjectID: project.ID,
-		Title:     "Approval path",
-		Problem:   "Approve a generated spec.",
-	})
-	if err != nil {
-		t.Fatalf("CreateWorkflow() error = %v", err)
-	}
+	detail := mustCreateWorkflow(t, service, "Approval path")
 
 	comment := "Spec is clear enough."
-	detail, err = service.ApproveSpec(context.Background(), detail.Workflow.ID, ApprovalInput{
+	detail, err := service.ApproveSpec(context.Background(), detail.Workflow.ID, ApprovalInput{
 		Comment:   &comment,
 		DecidedBy: "anton@example.com",
 	})
@@ -131,21 +123,184 @@ func TestServiceApprovesSpecAndNotifiesN8N(t *testing.T) {
 	}
 }
 
-func TestServiceUpdateStatusValidatesWorkflowLinkURLs(t *testing.T) {
+func TestServiceApprovalActionsUpdateWorkflowState(t *testing.T) {
+	tests := []struct {
+		name       string
+		action     func(*Service, context.Context, string, ApprovalInput) (WorkflowDetail, error)
+		status     domain.WorkflowStatus
+		decision   domain.ApprovalDecision
+		stepKey    domain.StepKey
+		stepStatus domain.StepStatus
+		notifies   bool
+	}{
+		{
+			name:       "request spec changes",
+			action:     (*Service).RequestSpecChanges,
+			status:     domain.WorkflowStatusSpecChangesRequested,
+			decision:   domain.ApprovalDecisionChangesRequested,
+			stepKey:    domain.StepKeySpecApproval,
+			stepStatus: domain.StepStatusFailed,
+		},
+		{
+			name:       "approve architecture",
+			action:     (*Service).ApproveArchitecture,
+			status:     domain.WorkflowStatusArchitectureApproved,
+			decision:   domain.ApprovalDecisionApproved,
+			stepKey:    domain.StepKeyArchitectureApproval,
+			stepStatus: domain.StepStatusDone,
+			notifies:   true,
+		},
+		{
+			name:       "request architecture changes",
+			action:     (*Service).RequestArchitectureChanges,
+			status:     domain.WorkflowStatusArchitectureChangesRequested,
+			decision:   domain.ApprovalDecisionChangesRequested,
+			stepKey:    domain.StepKeyArchitectureApproval,
+			stepStatus: domain.StepStatusFailed,
+		},
+		{
+			name:       "reject",
+			action:     (*Service).Reject,
+			status:     domain.WorkflowStatusRejected,
+			decision:   domain.ApprovalDecisionRejected,
+			stepKey:    domain.StepKeySpecApproval,
+			stepStatus: domain.StepStatusFailed,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := newMemoryRepository()
+			n8n := &fakeN8N{}
+			service := NewService(Dependencies{Repository: store, N8N: n8n})
+			detail := mustCreateWorkflow(t, service, tt.name)
+
+			detail, err := tt.action(service, context.Background(), detail.Workflow.ID, ApprovalInput{DecidedBy: "anton@example.com"})
+			if err != nil {
+				t.Fatalf("approval action error = %v", err)
+			}
+			if detail.Workflow.Status != tt.status {
+				t.Fatalf("status = %q, want %q", detail.Workflow.Status, tt.status)
+			}
+			if len(detail.Approvals) != 1 || detail.Approvals[0].Decision != tt.decision {
+				t.Fatalf("approvals = %+v, want %q", detail.Approvals, tt.decision)
+			}
+			step := stepByKey(detail.Steps, tt.stepKey)
+			if step == nil || step.Status != tt.stepStatus {
+				t.Fatalf("step %s = %+v, want %s", tt.stepKey, step, tt.stepStatus)
+			}
+			if tt.notifies && len(n8n.approvals) != 1 {
+				t.Fatalf("n8n approvals = %+v, want one notification", n8n.approvals)
+			}
+			if !tt.notifies && len(n8n.approvals) != 0 {
+				t.Fatalf("n8n approvals = %+v, want no notification", n8n.approvals)
+			}
+		})
+	}
+}
+
+func TestServiceMarksWorkflowFailedWhenApprovalWebhookFails(t *testing.T) {
+	store := newMemoryRepository()
+	n8n := &fakeN8N{approveErr: errors.New("webhook down")}
+	service := NewService(Dependencies{Repository: store, N8N: n8n})
+	detail := mustCreateWorkflow(t, service, "Approval webhook failure")
+
+	detail, err := service.ApproveSpec(context.Background(), detail.Workflow.ID, ApprovalInput{DecidedBy: "anton@example.com"})
+	if err != nil {
+		t.Fatalf("ApproveSpec() error = %v", err)
+	}
+	if detail.Workflow.Status != domain.WorkflowStatusFailed {
+		t.Fatalf("status = %q, want failed", detail.Workflow.Status)
+	}
+	specStep := stepByKey(detail.Steps, domain.StepKeySpecApproval)
+	if specStep == nil || specStep.Status != domain.StepStatusFailed {
+		t.Fatalf("spec approval step = %+v, want failed", specStep)
+	}
+	if got := lastEventType(detail.Events); got != "n8n_approval_failed" {
+		t.Fatalf("last event = %q, want n8n_approval_failed", got)
+	}
+}
+
+func TestServiceAddArtifactUpdatesWorkflowProgress(t *testing.T) {
+	store := newMemoryRepository()
+	service := NewService(Dependencies{Repository: store})
+	detail := mustCreateWorkflow(t, service, "Spec artifact")
+
+	detail, err := service.AddArtifact(context.Background(), AddArtifactInput{
+		WorkflowID:   detail.Workflow.ID,
+		ArtifactType: domain.ArtifactTypeSpec,
+		Title:        "System specification",
+	})
+	if err != nil {
+		t.Fatalf("AddArtifact() error = %v", err)
+	}
+	if detail.Workflow.Status != domain.WorkflowStatusSpecReview {
+		t.Fatalf("status = %q, want spec_review", detail.Workflow.Status)
+	}
+	systemStep := stepByKey(detail.Steps, domain.StepKeySystemAnalysis)
+	if systemStep == nil || systemStep.Status != domain.StepStatusDone {
+		t.Fatalf("system analysis step = %+v, want done", systemStep)
+	}
+	if len(detail.Artifacts) != 1 || detail.Artifacts[0].ArtifactType != domain.ArtifactTypeSpec {
+		t.Fatalf("artifacts = %+v, want spec artifact", detail.Artifacts)
+	}
+}
+
+func TestServiceAddEventAppliesReadyProgress(t *testing.T) {
+	store := newMemoryRepository()
+	service := NewService(Dependencies{Repository: store})
+	detail := mustCreateWorkflow(t, service, "Ready event")
+
+	detail, err := service.AddEvent(context.Background(), AddEventInput{
+		WorkflowID: detail.Workflow.ID,
+		Source:     domain.EventSourceN8N,
+		EventType:  "ready_for_implementation",
+		Message:    "Codex prompt generated",
+	})
+	if err != nil {
+		t.Fatalf("AddEvent() error = %v", err)
+	}
+	if detail.Workflow.Status != domain.WorkflowStatusReadyForImplementation {
+		t.Fatalf("status = %q, want ready_for_implementation", detail.Workflow.Status)
+	}
+	for _, key := range []domain.StepKey{domain.StepKeyCodexPromptGenerated, domain.StepKeyReadyForImplementation} {
+		step := stepByKey(detail.Steps, key)
+		if step == nil || step.Status != domain.StepStatusDone {
+			t.Fatalf("step %s = %+v, want done", key, step)
+		}
+	}
+}
+
+func TestServiceRejectsDuplicateFeatureIDPerProject(t *testing.T) {
 	store := newMemoryRepository()
 	service := NewService(Dependencies{Repository: store})
 	project := mustCreateProject(t, service)
-	detail, err := service.CreateWorkflow(context.Background(), CreateWorkflowInput{
+
+	_, err := service.CreateWorkflow(context.Background(), CreateWorkflowInput{
 		ProjectID: project.ID,
-		Title:     "Ready callback",
-		Problem:   "n8n reports implementation readiness.",
+		Title:     "Duplicate Feature",
+		Problem:   "First workflow.",
 	})
 	if err != nil {
-		t.Fatalf("CreateWorkflow() error = %v", err)
+		t.Fatalf("CreateWorkflow() first error = %v", err)
 	}
+	_, err = service.CreateWorkflow(context.Background(), CreateWorkflowInput{
+		ProjectID: project.ID,
+		Title:     "Duplicate Feature",
+		Problem:   "Second workflow.",
+	})
+	if !errors.Is(err, domain.ErrDuplicateWorkflow) {
+		t.Fatalf("CreateWorkflow() duplicate error = %v, want ErrDuplicateWorkflow", err)
+	}
+}
+
+func TestServiceUpdateStatusValidatesWorkflowLinkURLs(t *testing.T) {
+	store := newMemoryRepository()
+	service := NewService(Dependencies{Repository: store})
+	detail := mustCreateWorkflow(t, service, "Ready callback")
 
 	invalidIssueURL := "javascript:alert(1)"
-	_, err = service.UpdateStatus(context.Background(), UpdateStatusInput{
+	_, err := service.UpdateStatus(context.Background(), UpdateStatusInput{
 		WorkflowID:     detail.Workflow.ID,
 		Status:         domain.WorkflowStatusReadyForImplementation,
 		GitHubIssueURL: &invalidIssueURL,
@@ -169,15 +324,7 @@ func TestServiceUpdateStatusValidatesWorkflowLinkURLs(t *testing.T) {
 func TestServiceUpdateStatusNormalizesWorkflowLinks(t *testing.T) {
 	store := newMemoryRepository()
 	service := NewService(Dependencies{Repository: store})
-	project := mustCreateProject(t, service)
-	detail, err := service.CreateWorkflow(context.Background(), CreateWorkflowInput{
-		ProjectID: project.ID,
-		Title:     "Ready callback",
-		Problem:   "n8n reports implementation readiness.",
-	})
-	if err != nil {
-		t.Fatalf("CreateWorkflow() error = %v", err)
-	}
+	detail := mustCreateWorkflow(t, service, "Ready callback")
 
 	issueURL := " https://github.com/anton415/anton415-hub/issues/67 "
 	updated, err := service.UpdateStatus(context.Background(), UpdateStatusInput{
@@ -401,6 +548,20 @@ func mustCreateProject(t *testing.T, service *Service) domain.Project {
 		t.Fatalf("CreateProject() error = %v", err)
 	}
 	return project
+}
+
+func mustCreateWorkflow(t *testing.T, service *Service, title string) WorkflowDetail {
+	t.Helper()
+	project := mustCreateProject(t, service)
+	detail, err := service.CreateWorkflow(context.Background(), CreateWorkflowInput{
+		ProjectID: project.ID,
+		Title:     title,
+		Problem:   "n8n reports workflow progress.",
+	})
+	if err != nil {
+		t.Fatalf("CreateWorkflow() error = %v", err)
+	}
+	return detail
 }
 
 func stepKeys(steps []domain.Step) []domain.StepKey {

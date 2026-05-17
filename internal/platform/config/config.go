@@ -46,6 +46,7 @@ type Config struct {
 	VKOAuth                         OAuthClientConfig
 	OrchestratorN8NFeatureIntakeURL string
 	OrchestratorN8NApprovalURL      string
+	OrchestratorN8NOutboundToken    string
 	OrchestratorN8NCallbackToken    string
 }
 
@@ -138,6 +139,7 @@ func Load() (Config, error) {
 		},
 		OrchestratorN8NFeatureIntakeURL: stringFromEnv("ORCHESTRATOR_N8N_FEATURE_INTAKE_URL", ""),
 		OrchestratorN8NApprovalURL:      stringFromEnv("ORCHESTRATOR_N8N_APPROVAL_URL", ""),
+		OrchestratorN8NOutboundToken:    stringFromEnv("ORCHESTRATOR_N8N_OUTBOUND_TOKEN", ""),
 		OrchestratorN8NCallbackToken:    stringFromEnv("ORCHESTRATOR_N8N_CALLBACK_TOKEN", ""),
 	}
 

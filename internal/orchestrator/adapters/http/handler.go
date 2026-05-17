@@ -105,6 +105,14 @@ func (handler Handler) createProject(w http.ResponseWriter, r *http.Request) {
 	if !decodeRequest(w, r, &request) {
 		return
 	}
+	if !requireFields(w,
+		requiredField{"name", request.Name},
+		requiredField{"github_owner", request.GitHubOwner},
+		requiredField{"github_repo", request.GitHubRepo},
+		requiredField{"default_branch", request.DefaultBranch},
+	) {
+		return
+	}
 	project, err := handler.service.CreateProject(r.Context(), application.CreateProjectInput{
 		Name:          request.Name,
 		GitHubOwner:   request.GitHubOwner,
@@ -121,6 +129,14 @@ func (handler Handler) createProject(w http.ResponseWriter, r *http.Request) {
 func (handler Handler) updateProject(w http.ResponseWriter, r *http.Request) {
 	var request projectRequest
 	if !decodeRequest(w, r, &request) {
+		return
+	}
+	if !requireFields(w,
+		requiredField{"name", request.Name},
+		requiredField{"github_owner", request.GitHubOwner},
+		requiredField{"github_repo", request.GitHubRepo},
+		requiredField{"default_branch", request.DefaultBranch},
+	) {
 		return
 	}
 	project, err := handler.service.UpdateProject(r.Context(), chi.URLParam(r, "project_id"), application.UpdateProjectInput{
@@ -170,6 +186,13 @@ func (handler Handler) getWorkflow(w http.ResponseWriter, r *http.Request) {
 func (handler Handler) createWorkflow(w http.ResponseWriter, r *http.Request) {
 	var request createWorkflowRequest
 	if !decodeRequest(w, r, &request) {
+		return
+	}
+	if !requireFields(w,
+		requiredField{"project_id", request.ProjectID},
+		requiredField{"title", request.Title},
+		requiredField{"problem", request.Problem},
+	) {
 		return
 	}
 	workflow, err := handler.service.CreateWorkflow(r.Context(), application.CreateWorkflowInput{
@@ -231,6 +254,13 @@ func (handler Handler) n8nEvent(w http.ResponseWriter, r *http.Request) {
 	if !decodeRequest(w, r, &request) {
 		return
 	}
+	if !requireFields(w,
+		requiredField{"workflow_id", request.WorkflowID},
+		requiredField{"event_type", request.EventType},
+		requiredField{"message", request.Message},
+	) {
+		return
+	}
 	workflow, err := handler.service.AddEvent(r.Context(), application.AddEventInput{
 		WorkflowID:  request.WorkflowID,
 		Source:      domain.EventSourceN8N,
@@ -248,6 +278,13 @@ func (handler Handler) n8nEvent(w http.ResponseWriter, r *http.Request) {
 func (handler Handler) n8nArtifact(w http.ResponseWriter, r *http.Request) {
 	var request n8nArtifactRequest
 	if !decodeRequest(w, r, &request) {
+		return
+	}
+	if !requireFields(w,
+		requiredField{"workflow_id", request.WorkflowID},
+		requiredField{"artifact_type", request.ArtifactType},
+		requiredField{"title", request.Title},
+	) {
 		return
 	}
 	var createdByAgent *domain.Agent
@@ -273,6 +310,12 @@ func (handler Handler) n8nArtifact(w http.ResponseWriter, r *http.Request) {
 func (handler Handler) n8nStatus(w http.ResponseWriter, r *http.Request) {
 	var request n8nStatusRequest
 	if !decodeRequest(w, r, &request) {
+		return
+	}
+	if !requireFields(w,
+		requiredField{"workflow_id", request.WorkflowID},
+		requiredField{"status", request.Status},
+	) {
 		return
 	}
 	var stepKey *domain.StepKey
@@ -608,6 +651,21 @@ func decodeRequest(w http.ResponseWriter, r *http.Request, value any) bool {
 		}
 		writeErrorResponse(w, http.StatusBadRequest, "bad_request", "request body must be valid JSON")
 		return false
+	}
+	return true
+}
+
+type requiredField struct {
+	name  string
+	value string
+}
+
+func requireFields(w http.ResponseWriter, fields ...requiredField) bool {
+	for _, field := range fields {
+		if strings.TrimSpace(field.value) == "" {
+			writeErrorResponse(w, http.StatusBadRequest, "invalid_request", field.name+" is required")
+			return false
+		}
 	}
 	return true
 }
