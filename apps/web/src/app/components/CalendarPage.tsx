@@ -287,14 +287,16 @@ export function CalendarPage() {
               {week.map((day, dayIndex) => {
                 const dayEvents = getEventsForDate(day);
                 return (
-                  <Card
+                  <button
                     key={dayIndex}
-                    className={`p-2 min-h-[80px] md:min-h-[100px] cursor-pointer transition-colors
+                    type="button"
+                    onClick={() => openEventDialog(day)}
+                    aria-label={`${formatRu(day, 'd MMMM yyyy')}${dayEvents.length > 0 ? `, событий: ${dayEvents.length}` : ''}`}
+                    className={`bg-card text-card-foreground flex flex-col gap-6 rounded-xl border p-2 min-h-[80px] md:min-h-[100px] text-left transition-colors
                       ${!isSameMonth(day, currentDate) ? 'opacity-40' : ''}
                       ${isToday(day) ? 'border-primary border-2' : ''}
-                      hover:border-ring
+                      hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
                     `}
-                    onClick={() => openEventDialog(day)}
                   >
                     <div className={`text-xs md:text-sm mb-1 ${isToday(day) ? 'font-bold text-primary' : ''}`}>
                       {formatRu(day, 'd')}
@@ -314,7 +316,7 @@ export function CalendarPage() {
                         <div className="text-[10px] text-muted-foreground">+{dayEvents.length - 3}</div>
                       )}
                     </div>
-                  </Card>
+                  </button>
                 );
               })}
             </div>

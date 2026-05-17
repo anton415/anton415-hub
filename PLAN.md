@@ -40,7 +40,7 @@
   - Источник: Accessibility 1, Task T6
   - Acceptance: Tab навигация по sidebar работает, focus ring виден, screen reader объявляет «button»
 
-- [ ] 🟠 **P1.2.2** Заменить `<Card onClick>` на `<button>` (или `Card asChild role="button"`) в CalendarPage
+- [x] ✅ 🟠 **P1.2.2** Заменить `<Card onClick>` на `<button>` (или `Card asChild role="button"`) в CalendarPage
   - Файл: `CalendarPage.tsx:320-347`
   - Источник: Accessibility 1
   - Acceptance: ячейки дня кликаются с клавиатуры
