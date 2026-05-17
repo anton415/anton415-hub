@@ -367,7 +367,7 @@ func insertArtifact(ctx context.Context, db queryer, artifact domain.Artifact) (
 func insertApproval(ctx context.Context, db queryer, approval domain.Approval) (domain.Approval, error) {
 	created, err := scanApproval(db.QueryRow(ctx, `
 		INSERT INTO orchestrator_approvals (workflow_id, step_key, decision, comment, decided_by, decided_at)
-		SELECT id, $2, $3, $4, $5::jsonb, $6
+		SELECT id, $2, $3, $4, $5, $6
 		FROM orchestrator_workflows
 		WHERE id::text = $1
 		RETURNING id::text, workflow_id::text, step_key, decision, comment, decided_by, decided_at

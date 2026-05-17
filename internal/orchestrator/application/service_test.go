@@ -130,6 +130,68 @@ func TestServiceApprovesSpecAndNotifiesN8N(t *testing.T) {
 	}
 }
 
+func TestServiceUpdateStatusValidatesWorkflowLinkURLs(t *testing.T) {
+	store := newMemoryRepository()
+	service := NewService(Dependencies{Repository: store})
+	project := mustCreateProject(t, service)
+	detail, err := service.CreateWorkflow(context.Background(), CreateWorkflowInput{
+		ProjectID: project.ID,
+		Title:     "Ready callback",
+		Problem:   "n8n reports implementation readiness.",
+	})
+	if err != nil {
+		t.Fatalf("CreateWorkflow() error = %v", err)
+	}
+
+	invalidIssueURL := "javascript:alert(1)"
+	_, err = service.UpdateStatus(context.Background(), UpdateStatusInput{
+		WorkflowID:     detail.Workflow.ID,
+		Status:         domain.WorkflowStatusReadyForImplementation,
+		GitHubIssueURL: &invalidIssueURL,
+	})
+	if !errors.Is(err, domain.ErrInvalidURL) {
+		t.Fatalf("UpdateStatus() error = %v, want ErrInvalidURL", err)
+	}
+
+	unchanged, err := service.GetWorkflow(context.Background(), detail.Workflow.ID)
+	if err != nil {
+		t.Fatalf("GetWorkflow() error = %v", err)
+	}
+	if unchanged.Workflow.Status != domain.WorkflowStatusSystemAnalysisRunning {
+		t.Fatalf("status = %q, want unchanged system_analysis_running", unchanged.Workflow.Status)
+	}
+	if unchanged.Workflow.GitHubIssueURL != nil {
+		t.Fatalf("github issue url = %q, want nil", *unchanged.Workflow.GitHubIssueURL)
+	}
+}
+
+func TestServiceUpdateStatusNormalizesWorkflowLinks(t *testing.T) {
+	store := newMemoryRepository()
+	service := NewService(Dependencies{Repository: store})
+	project := mustCreateProject(t, service)
+	detail, err := service.CreateWorkflow(context.Background(), CreateWorkflowInput{
+		ProjectID: project.ID,
+		Title:     "Ready callback",
+		Problem:   "n8n reports implementation readiness.",
+	})
+	if err != nil {
+		t.Fatalf("CreateWorkflow() error = %v", err)
+	}
+
+	issueURL := " https://github.com/anton415/anton415-hub/issues/67 "
+	updated, err := service.UpdateStatus(context.Background(), UpdateStatusInput{
+		WorkflowID:     detail.Workflow.ID,
+		Status:         domain.WorkflowStatusReadyForImplementation,
+		GitHubIssueURL: &issueURL,
+	})
+	if err != nil {
+		t.Fatalf("UpdateStatus() error = %v", err)
+	}
+	if updated.Workflow.GitHubIssueURL == nil || *updated.Workflow.GitHubIssueURL != "https://github.com/anton415/anton415-hub/issues/67" {
+		t.Fatalf("github issue url = %v, want trimmed GitHub issue URL", updated.Workflow.GitHubIssueURL)
+	}
+}
+
 type fakeN8N struct {
 	startErr   error
 	approveErr error

@@ -319,11 +319,25 @@ func (service *Service) UpdateStatus(ctx context.Context, input UpdateStatusInpu
 	if input.StepStatus != nil && !(*input.StepStatus).Valid() {
 		return WorkflowDetail{}, domain.ErrInvalidStep
 	}
+
+	githubIssueURL := input.GitHubIssueURL
+	githubPRURL := input.GitHubPRURL
+	n8nExecutionID := input.N8NExecutionID
+	if input.GitHubIssueURL != nil || input.GitHubPRURL != nil || input.N8NExecutionID != nil {
+		workflowWithLinks, err := (domain.Workflow{}).WithLinks(input.GitHubIssueURL, input.GitHubPRURL, input.N8NExecutionID, now)
+		if err != nil {
+			return WorkflowDetail{}, err
+		}
+		githubIssueURL = workflowWithLinks.GitHubIssueURL
+		githubPRURL = workflowWithLinks.GitHubPRURL
+		n8nExecutionID = workflowWithLinks.N8NExecutionID
+	}
+
 	if _, err := service.repository.UpdateWorkflowStatus(ctx, input.WorkflowID, input.Status, now); err != nil {
 		return WorkflowDetail{}, err
 	}
 	if input.GitHubIssueURL != nil || input.GitHubPRURL != nil || input.N8NExecutionID != nil {
-		if _, err := service.repository.UpdateWorkflowLinks(ctx, input.WorkflowID, input.GitHubIssueURL, input.GitHubPRURL, input.N8NExecutionID, now); err != nil {
+		if _, err := service.repository.UpdateWorkflowLinks(ctx, input.WorkflowID, githubIssueURL, githubPRURL, n8nExecutionID, now); err != nil {
 			return WorkflowDetail{}, err
 		}
 	}
