@@ -224,3 +224,127 @@ export type TodoTaskQuery = {
   direction?: TodoSortDirection;
   q?: string;
 };
+
+export type OrchestratorProjectStatus = "active" | "archived";
+
+export type OrchestratorWorkflowStatus =
+  | "draft"
+  | "system_analysis_running"
+  | "spec_review"
+  | "spec_approved"
+  | "spec_changes_requested"
+  | "architecture_running"
+  | "architecture_review"
+  | "architecture_approved"
+  | "architecture_changes_requested"
+  | "ready_for_implementation"
+  | "implementation_running"
+  | "pr_review"
+  | "done"
+  | "failed"
+  | "rejected";
+
+export type OrchestratorStepStatus = "pending" | "running" | "done" | "failed" | "skipped";
+
+export type OrchestratorProject = {
+  id: string;
+  name: string;
+  github_owner: string;
+  github_repo: string;
+  default_branch: string;
+  config_path: string;
+  status: OrchestratorProjectStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OrchestratorWorkflow = {
+  id: string;
+  project_id: string;
+  feature_id: string;
+  title: string;
+  module: string | null;
+  problem: string;
+  status: OrchestratorWorkflowStatus;
+  github_issue_url: string | null;
+  github_pr_url: string | null;
+  n8n_execution_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OrchestratorWorkflowSummary = {
+  workflow: OrchestratorWorkflow;
+  project: OrchestratorProject;
+  step_count: number;
+  artifact_count: number;
+  approval_count: number;
+  event_count: number;
+};
+
+export type OrchestratorStep = {
+  id: string;
+  workflow_id: string;
+  step_key: string;
+  title: string;
+  agent: string | null;
+  status: OrchestratorStepStatus;
+  started_at: string | null;
+  finished_at: string | null;
+  error_message: string | null;
+};
+
+export type OrchestratorArtifact = {
+  id: string;
+  workflow_id: string;
+  artifact_type: string;
+  title: string;
+  github_url: string | null;
+  local_preview: string | null;
+  created_by_agent: string | null;
+  created_at: string;
+};
+
+export type OrchestratorApproval = {
+  id: string;
+  workflow_id: string;
+  step_key: string;
+  decision: string;
+  comment: string | null;
+  decided_by: string;
+  decided_at: string;
+};
+
+export type OrchestratorEvent = {
+  id: string;
+  workflow_id: string;
+  source: string;
+  event_type: string;
+  message: string;
+  payload_json: unknown;
+  created_at: string;
+};
+
+export type OrchestratorWorkflowDetail = {
+  workflow: OrchestratorWorkflow;
+  project: OrchestratorProject;
+  steps: OrchestratorStep[];
+  artifacts: OrchestratorArtifact[];
+  approvals: OrchestratorApproval[];
+  events: OrchestratorEvent[];
+};
+
+export type OrchestratorProjectPayload = {
+  name: string;
+  github_owner: string;
+  github_repo: string;
+  default_branch: string;
+  status?: OrchestratorProjectStatus;
+};
+
+export type OrchestratorWorkflowPayload = {
+  project_id: string;
+  title: string;
+  module: string | null;
+  problem: string;
+};
