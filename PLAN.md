@@ -35,7 +35,7 @@
 
 ### P1.2 Accessibility baseline
 
-- [ ] 🟠 **P1.2.1** Заменить `<div onClick>` / `<span onClick>` на `<button>` в TasksPage sidebar
+- [x] ✅ 🟠 **P1.2.1** Заменить `<div onClick>` / `<span onClick>` на `<button>` в TasksPage sidebar
   - Файл: `TasksPage.tsx:405-441` (renderProject, chevron)
   - Источник: Accessibility 1, Task T6
   - Acceptance: Tab навигация по sidebar работает, focus ring виден, screen reader объявляет «button»
