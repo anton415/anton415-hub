@@ -154,6 +154,7 @@ jobs:
             DB_MIGRATION_MARKER="${APP_DIR}/.anton415-hub-db-migrated"
             DB_NAME="anton415_hub"
             DB_USER="anton415_hub_app"
+            LOCKBOX_SECRET_ID="e6qfeq82r1rpv9vot1dt"
             image="${{ steps.image.outputs.image }}"
             app_version="${{ steps.image.outputs.tag }}"
 
@@ -217,6 +218,80 @@ jobs:
                 echo "$key is required in $file after Lockbox sync" >&2
                 exit 64
               fi
+            }
+
+            write_lockbox_sync_script() {
+              sudo tee "${APP_DIR}/sync-lockbox-env.sh" >/dev/null <<'LOCKBOX_SYNC'
+            #!/bin/sh
+            set -eu
+
+            SECRET_ID="__LOCKBOX_SECRET_ID__"
+            OUT="/opt/anton415-hub/secrets.env"
+            POSTGRES_OUT="/opt/anton415-hub/postgres.env"
+            TMP="$(mktemp)"
+            OUT_TMP="$(mktemp)"
+
+            cleanup() {
+              rm -f "$TMP" "$OUT_TMP"
+            }
+            trap cleanup EXIT
+
+            write_postgres_env() {
+              password="$(awk -F= '$1 == "POSTGRES_PASSWORD" { sub(/^[^=]*=/, ""); print; found = 1; exit } END { exit found ? 0 : 1 }' "$OUT" || true)"
+              if [ -z "$password" ]; then
+                install -m 0600 /dev/null "$POSTGRES_OUT"
+                return
+              fi
+
+              POSTGRES_TMP="$(mktemp)"
+              printf 'POSTGRES_PASSWORD=%s\n' "$password" > "$POSTGRES_TMP"
+              install -m 0600 "$POSTGRES_TMP" "$POSTGRES_OUT"
+              rm -f "$POSTGRES_TMP"
+            }
+
+            TOKEN_JSON="$(curl -fsS -H 'Metadata-Flavor: Google' http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token)"
+            IAM_TOKEN="$(printf '%s' "$TOKEN_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')"
+
+            if curl -fsS \
+              -H "Authorization: Bearer $IAM_TOKEN" \
+              "https://payload.lockbox.api.cloud.yandex.net/lockbox/v1/secrets/$SECRET_ID/payload" \
+              -o "$TMP"; then
+              python3 - "$TMP" > "$OUT_TMP" <<'PY'
+            import base64
+            import json
+            import re
+            import sys
+
+            key_pattern = re.compile(r"^[A-Z0-9_]+$")
+
+            with open(sys.argv[1], "r", encoding="utf-8") as fh:
+                payload = json.load(fh)
+
+            for entry in payload.get("entries", []):
+                key = entry.get("key", "")
+                if not key_pattern.match(key):
+                    raise SystemExit(f"invalid env key in Lockbox payload: {key!r}")
+
+                if "textValue" in entry:
+                    value = entry["textValue"]
+                elif "binaryValue" in entry:
+                    value = base64.b64decode(entry["binaryValue"]).decode("utf-8")
+                else:
+                    value = ""
+
+                if "\n" in value or "\r" in value:
+                    raise SystemExit(f"multiline env value is not supported for {key}")
+
+                print(f"{key}={value}")
+            PY
+              install -m 0600 "$OUT_TMP" "$OUT"
+            else
+              install -m 0600 /dev/null "$OUT"
+            fi
+            write_postgres_env
+            LOCKBOX_SYNC
+              sudo sed -i "s#__LOCKBOX_SECRET_ID__#${LOCKBOX_SECRET_ID}#g" "${APP_DIR}/sync-lockbox-env.sh"
+              sudo chmod 0700 "${APP_DIR}/sync-lockbox-env.sh"
             }
 
             write_postgres_env_file() {
@@ -390,16 +465,8 @@ jobs:
             upsert_env ORCHESTRATOR_N8N_APPROVAL_URL "http://n8n:5678/webhook/orchestrator-approval"
             upsert_env ORCHESTRATOR_N8N_OUTBOUND_TOKEN ""
 
-            if [ ! -x "${APP_DIR}/sync-lockbox-env.sh" ] && [ -f "${OLD_APP_DIR}/sync-lockbox-env.sh" ]; then
-              sudo cp "${OLD_APP_DIR}/sync-lockbox-env.sh" "${APP_DIR}/sync-lockbox-env.sh"
-              sudo sed -i.bak 's#/opt/anton415-os/secrets.env#/opt/anton415-hub/secrets.env#g' "${APP_DIR}/sync-lockbox-env.sh"
-              sudo chmod 0700 "${APP_DIR}/sync-lockbox-env.sh"
-            fi
-            if [ -x "${APP_DIR}/sync-lockbox-env.sh" ]; then
-              sudo "${APP_DIR}/sync-lockbox-env.sh"
-            elif [ ! -f "$SECRETS_FILE" ]; then
-              sudo install -m 0600 /dev/null "$SECRETS_FILE"
-            fi
+            write_lockbox_sync_script
+            sudo "${APP_DIR}/sync-lockbox-env.sh"
             if [ ! -f "$SECRETS_FILE" ]; then
               sudo install -m 0600 /dev/null "$SECRETS_FILE"
             fi
