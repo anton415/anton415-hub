@@ -23,7 +23,7 @@
   - Источник: Critical Issue 1, Task T1
   - Acceptance: после refresh нет фейковых событий; неавторизованный пользователь не видит UI до редиректа
 
-- [ ] 🟡 **P1.1.2** Заменить `Date.now().toString()` на `crypto.randomUUID()` для id событий
+- [x] ✅ 🟡 **P1.1.2** Заменить `Date.now().toString()` на `crypto.randomUUID()` для id событий
   - Файл: `CalendarPage.tsx:202`
   - Источник: Stability Finding 9
   - Acceptance: id уникальны, нет коллизий при быстрых кликах
