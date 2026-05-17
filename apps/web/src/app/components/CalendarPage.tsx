@@ -169,7 +169,7 @@ export function CalendarPage() {
   const saveEvent = () => {
     if (newEvent.title && newEvent.startDate) {
       const event: CalendarEvent = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         title: newEvent.title,
         type: newEvent.type || 'event',
         startDate: newEvent.startDate,
