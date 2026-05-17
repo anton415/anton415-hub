@@ -19,6 +19,7 @@ WORKDIR /app
 COPY --from=api-builder /out/anton415-hub /app/anton415-hub
 COPY --from=web-builder /workspace/apps/web/dist /app/web
 COPY migrations /app/migrations
+COPY deploy/n8n/workflows /app/deploy/n8n/workflows
 ENV APP_ENV=production \
     HTTP_ADDR=:8080 \
     STATIC_DIR=/app/web

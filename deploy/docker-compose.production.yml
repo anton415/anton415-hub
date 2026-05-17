@@ -13,6 +13,19 @@ services:
       timeout: 5s
       retries: 12
 
+  n8n-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file:
+      - /opt/anton415-hub/n8n-postgres.env
+    volumes:
+      - n8n_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
   migrate:
     image: migrate/migrate:v4.18.3
     restart: "no"
@@ -39,6 +52,20 @@ services:
       timeout: 5s
       retries: 5
 
+  n8n:
+    image: n8nio/n8n:2.20.9
+    restart: unless-stopped
+    env_file:
+      - /opt/anton415-hub/n8n.env
+    expose:
+      - "5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - /opt/anton415-hub/n8n/workflows:/opt/n8n/workflows:ro
+    depends_on:
+      n8n-postgres:
+        condition: service_healthy
+
   caddy:
     image: caddy:2.8-alpine
     restart: unless-stopped
@@ -54,5 +81,7 @@ services:
 
 volumes:
   postgres_data:
+  n8n_postgres_data:
+  n8n_data:
   caddy_data:
   caddy_config:
