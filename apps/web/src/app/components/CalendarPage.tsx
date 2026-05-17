@@ -103,37 +103,7 @@ export function CalendarPage() {
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [eventType, setEventType] = useState<'event' | 'reminder'>('event');
-  const [events, setEvents] = useState<CalendarEvent[]>([
-    {
-      id: '1',
-      title: 'Встреча с командой',
-      type: 'event',
-      startDate: '2026-05-07',
-      endDate: '2026-05-07',
-      startTime: '10:00',
-      endTime: '11:30',
-      location: 'Офис',
-      color: 'var(--chart-1)',
-      description: 'Обсуждение проекта anton-hub'
-    },
-    {
-      id: '2',
-      title: 'Оплатить счета',
-      type: 'reminder',
-      startDate: '2026-05-10',
-      startTime: '09:00',
-      color: 'var(--warning)'
-    },
-    {
-      id: '3',
-      title: 'День рождения',
-      type: 'event',
-      startDate: '2026-05-15',
-      endDate: '2026-05-15',
-      startTime: '18:00',
-      color: 'var(--chart-5)'
-    }
-  ]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   const [newEvent, setNewEvent] = useState<Partial<CalendarEvent>>({
     type: 'event',
@@ -496,6 +466,10 @@ export function CalendarPage() {
       </div>
     );
   };
+
+  if (status === 'loading') {
+    return <div className="flex items-center justify-center h-screen text-muted-foreground">Загрузка…</div>;
+  }
 
   return (
     <div className="flex flex-col h-screen bg-background">
