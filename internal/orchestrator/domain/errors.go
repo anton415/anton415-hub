@@ -9,6 +9,7 @@ var (
 	ErrInvalidWorkflowTitle    = errors.New("orchestrator workflow title is invalid")
 	ErrInvalidWorkflowProblem  = errors.New("orchestrator workflow problem is invalid")
 	ErrInvalidWorkflowStatus   = errors.New("orchestrator workflow status is invalid")
+	ErrDuplicateWorkflow       = errors.New("orchestrator workflow already exists")
 	ErrInvalidStep             = errors.New("orchestrator step is invalid")
 	ErrInvalidArtifact         = errors.New("orchestrator artifact is invalid")
 	ErrInvalidApprovalDecision = errors.New("orchestrator approval decision is invalid")

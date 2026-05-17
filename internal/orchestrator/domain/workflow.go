@@ -60,6 +60,12 @@ type Workflow struct {
 	UpdatedAt      time.Time
 }
 
+type WorkflowLinks struct {
+	GitHubIssueURL *string
+	GitHubPRURL    *string
+	N8NExecutionID *string
+}
+
 func NewWorkflow(projectID string, featureID string, title string, module *string, problem string, now time.Time) (Workflow, error) {
 	title, err := normalizeRequiredText(title, ErrInvalidWorkflowTitle)
 	if err != nil {
@@ -96,17 +102,29 @@ func (workflow Workflow) WithStatus(status WorkflowStatus, now time.Time) (Workf
 }
 
 func (workflow Workflow) WithLinks(githubIssueURL *string, githubPRURL *string, n8nExecutionID *string, now time.Time) (Workflow, error) {
-	issueURL, err := normalizeOptionalURL(githubIssueURL)
+	links, err := NormalizeWorkflowLinks(githubIssueURL, githubPRURL, n8nExecutionID)
 	if err != nil {
 		return Workflow{}, err
+	}
+	workflow.GitHubIssueURL = links.GitHubIssueURL
+	workflow.GitHubPRURL = links.GitHubPRURL
+	workflow.N8NExecutionID = links.N8NExecutionID
+	workflow.UpdatedAt = now
+	return workflow, nil
+}
+
+func NormalizeWorkflowLinks(githubIssueURL *string, githubPRURL *string, n8nExecutionID *string) (WorkflowLinks, error) {
+	issueURL, err := normalizeOptionalURL(githubIssueURL)
+	if err != nil {
+		return WorkflowLinks{}, err
 	}
 	prURL, err := normalizeOptionalURL(githubPRURL)
 	if err != nil {
-		return Workflow{}, err
+		return WorkflowLinks{}, err
 	}
-	workflow.GitHubIssueURL = issueURL
-	workflow.GitHubPRURL = prURL
-	workflow.N8NExecutionID = normalizeOptionalText(n8nExecutionID)
-	workflow.UpdatedAt = now
-	return workflow, nil
+	return WorkflowLinks{
+		GitHubIssueURL: issueURL,
+		GitHubPRURL:    prURL,
+		N8NExecutionID: normalizeOptionalText(n8nExecutionID),
+	}, nil
 }

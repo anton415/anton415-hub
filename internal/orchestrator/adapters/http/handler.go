@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -209,13 +210,14 @@ func (handler Handler) approvalAction(w http.ResponseWriter, r *http.Request, ac
 	if !decodeRequest(w, r, &request) {
 		return
 	}
-	decidedBy := "anton"
-	if principal, ok := authhttp.PrincipalFromContext(r.Context()); ok && strings.TrimSpace(principal.Email) != "" {
-		decidedBy = principal.Email
+	principal, ok := authhttp.PrincipalFromContext(r.Context())
+	if !ok || strings.TrimSpace(principal.Email) == "" {
+		writeErrorResponse(w, http.StatusInternalServerError, "principal_missing", "authenticated principal is missing")
+		return
 	}
 	workflow, err := action(r.Context(), chi.URLParam(r, "workflow_id"), application.ApprovalInput{
 		Comment:   request.Comment,
-		DecidedBy: decidedBy,
+		DecidedBy: strings.TrimSpace(principal.Email),
 	})
 	if err != nil {
 		writeError(w, err)
@@ -229,12 +231,9 @@ func (handler Handler) n8nEvent(w http.ResponseWriter, r *http.Request) {
 	if !decodeRequest(w, r, &request) {
 		return
 	}
-	if strings.TrimSpace(request.Source) == "" {
-		request.Source = string(domain.EventSourceN8N)
-	}
 	workflow, err := handler.service.AddEvent(r.Context(), application.AddEventInput{
 		WorkflowID:  request.WorkflowID,
-		Source:      domain.EventSource(request.Source),
+		Source:      domain.EventSourceN8N,
 		EventType:   request.EventType,
 		Message:     request.Message,
 		PayloadJSON: request.Payload,
@@ -310,7 +309,7 @@ func (handler Handler) requireCallbackToken(next http.Handler) http.Handler {
 			writeErrorResponse(w, http.StatusServiceUnavailable, "callback_token_not_configured", "orchestrator n8n callback token is not configured")
 			return
 		}
-		if r.Header.Get("Authorization") != "Bearer "+token {
+		if subtle.ConstantTimeCompare([]byte(r.Header.Get("Authorization")), []byte("Bearer "+token)) != 1 {
 			writeErrorResponse(w, http.StatusUnauthorized, "unauthorized", "n8n callback token is invalid")
 			return
 		}
@@ -635,6 +634,8 @@ func writeError(w http.ResponseWriter, err error) {
 		writeErrorResponse(w, http.StatusBadRequest, "validation_error", "workflow problem is required")
 	case errors.Is(err, domain.ErrInvalidWorkflowStatus):
 		writeErrorResponse(w, http.StatusBadRequest, "validation_error", "workflow status is invalid")
+	case errors.Is(err, domain.ErrDuplicateWorkflow):
+		writeErrorResponse(w, http.StatusConflict, "conflict", "workflow feature id already exists for this project")
 	case errors.Is(err, domain.ErrInvalidStep):
 		writeErrorResponse(w, http.StatusBadRequest, "validation_error", "workflow step is invalid")
 	case errors.Is(err, domain.ErrInvalidArtifact):

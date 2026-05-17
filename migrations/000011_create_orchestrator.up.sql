@@ -43,7 +43,8 @@ CREATE TABLE orchestrator_workflows (
     github_pr_url TEXT,
     n8n_execution_id TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT orchestrator_workflows_project_feature_unique UNIQUE (project_id, feature_id)
 );
 
 CREATE TABLE orchestrator_steps (

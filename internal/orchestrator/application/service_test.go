@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strconv"
 	"testing"
 	"time"
 
@@ -232,7 +233,11 @@ func newMemoryRepository() *memoryRepository {
 
 func (repo *memoryRepository) id(prefix string) string {
 	repo.nextID++
-	return prefix + "-" + string(rune('0'+repo.nextID))
+	return prefix + "-" + strconv.Itoa(repo.nextID)
+}
+
+func (repo *memoryRepository) WithTx(ctx context.Context, fn func(Repository) error) error {
+	return fn(repo)
 }
 
 func (repo *memoryRepository) ListProjects(context.Context) ([]domain.Project, error) {
@@ -300,6 +305,11 @@ func (repo *memoryRepository) GetWorkflow(_ context.Context, id string) (Workflo
 func (repo *memoryRepository) CreateWorkflow(_ context.Context, workflow domain.Workflow, steps []domain.Step, event domain.Event) (WorkflowDetail, error) {
 	if _, ok := repo.projects[workflow.ProjectID]; !ok {
 		return WorkflowDetail{}, ErrNotFound
+	}
+	for _, existing := range repo.workflows {
+		if existing.ProjectID == workflow.ProjectID && existing.FeatureID == workflow.FeatureID {
+			return WorkflowDetail{}, domain.ErrDuplicateWorkflow
+		}
 	}
 	workflow.ID = repo.id("workflow")
 	repo.workflows[workflow.ID] = workflow

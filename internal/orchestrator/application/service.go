@@ -10,6 +10,8 @@ import (
 )
 
 type Repository interface {
+	WithTx(ctx context.Context, fn func(Repository) error) error
+
 	ListProjects(ctx context.Context) ([]domain.Project, error)
 	GetProject(ctx context.Context, id string) (domain.Project, error)
 	CreateProject(ctx context.Context, project domain.Project) (domain.Project, error)
@@ -276,17 +278,26 @@ func (service *Service) AddArtifact(ctx context.Context, input AddArtifactInput)
 	if err != nil {
 		return WorkflowDetail{}, err
 	}
-	if _, err := service.repository.CreateArtifact(ctx, artifact); err != nil {
+	if err := service.repository.WithTx(ctx, func(repo Repository) error {
+		if _, err := repo.CreateArtifact(ctx, artifact); err != nil {
+			return err
+		}
+		switch input.ArtifactType {
+		case domain.ArtifactTypeSpec:
+			if _, err := repo.UpdateWorkflowStatus(ctx, input.WorkflowID, domain.WorkflowStatusSpecReview, now); err != nil {
+				return err
+			}
+			return repo.UpdateStep(ctx, input.WorkflowID, domain.StepKeySystemAnalysis, domain.StepStatusDone, nil, now)
+		case domain.ArtifactTypeArchitecture:
+			if _, err := repo.UpdateWorkflowStatus(ctx, input.WorkflowID, domain.WorkflowStatusArchitectureReview, now); err != nil {
+				return err
+			}
+			return repo.UpdateStep(ctx, input.WorkflowID, domain.StepKeyArchitecture, domain.StepStatusDone, nil, now)
+		default:
+			return nil
+		}
+	}); err != nil {
 		return WorkflowDetail{}, err
-	}
-
-	switch input.ArtifactType {
-	case domain.ArtifactTypeSpec:
-		_, _ = service.repository.UpdateWorkflowStatus(ctx, input.WorkflowID, domain.WorkflowStatusSpecReview, now)
-		_ = service.repository.UpdateStep(ctx, input.WorkflowID, domain.StepKeySystemAnalysis, domain.StepStatusDone, nil, now)
-	case domain.ArtifactTypeArchitecture:
-		_, _ = service.repository.UpdateWorkflowStatus(ctx, input.WorkflowID, domain.WorkflowStatusArchitectureReview, now)
-		_ = service.repository.UpdateStep(ctx, input.WorkflowID, domain.StepKeyArchitecture, domain.StepStatusDone, nil, now)
 	}
 
 	return service.repository.GetWorkflow(ctx, input.WorkflowID)
@@ -298,10 +309,14 @@ func (service *Service) AddEvent(ctx context.Context, input AddEventInput) (Work
 	if err != nil {
 		return WorkflowDetail{}, err
 	}
-	if _, err := service.repository.CreateEvent(ctx, event); err != nil {
+	if err := service.repository.WithTx(ctx, func(repo Repository) error {
+		if _, err := repo.CreateEvent(ctx, event); err != nil {
+			return err
+		}
+		return service.applyEventProgress(ctx, repo, input.WorkflowID, input.EventType, now)
+	}); err != nil {
 		return WorkflowDetail{}, err
 	}
-	service.applyEventProgress(ctx, input.WorkflowID, input.EventType, now)
 	return service.repository.GetWorkflow(ctx, input.WorkflowID)
 }
 
@@ -320,31 +335,37 @@ func (service *Service) UpdateStatus(ctx context.Context, input UpdateStatusInpu
 		return WorkflowDetail{}, domain.ErrInvalidStep
 	}
 
-	githubIssueURL := input.GitHubIssueURL
-	githubPRURL := input.GitHubPRURL
-	n8nExecutionID := input.N8NExecutionID
-	if input.GitHubIssueURL != nil || input.GitHubPRURL != nil || input.N8NExecutionID != nil {
-		workflowWithLinks, err := (domain.Workflow{}).WithLinks(input.GitHubIssueURL, input.GitHubPRURL, input.N8NExecutionID, now)
+	linksProvided := input.GitHubIssueURL != nil || input.GitHubPRURL != nil || input.N8NExecutionID != nil
+	links := domain.WorkflowLinks{
+		GitHubIssueURL: input.GitHubIssueURL,
+		GitHubPRURL:    input.GitHubPRURL,
+		N8NExecutionID: input.N8NExecutionID,
+	}
+	if linksProvided {
+		normalized, err := domain.NormalizeWorkflowLinks(input.GitHubIssueURL, input.GitHubPRURL, input.N8NExecutionID)
 		if err != nil {
 			return WorkflowDetail{}, err
 		}
-		githubIssueURL = workflowWithLinks.GitHubIssueURL
-		githubPRURL = workflowWithLinks.GitHubPRURL
-		n8nExecutionID = workflowWithLinks.N8NExecutionID
+		links = normalized
 	}
 
-	if _, err := service.repository.UpdateWorkflowStatus(ctx, input.WorkflowID, input.Status, now); err != nil {
+	if err := service.repository.WithTx(ctx, func(repo Repository) error {
+		if _, err := repo.UpdateWorkflowStatus(ctx, input.WorkflowID, input.Status, now); err != nil {
+			return err
+		}
+		if linksProvided {
+			if _, err := repo.UpdateWorkflowLinks(ctx, input.WorkflowID, links.GitHubIssueURL, links.GitHubPRURL, links.N8NExecutionID, now); err != nil {
+				return err
+			}
+		}
+		if input.StepKey != nil && input.StepStatus != nil {
+			if err := repo.UpdateStep(ctx, input.WorkflowID, *input.StepKey, *input.StepStatus, input.ErrorMessage, now); err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
 		return WorkflowDetail{}, err
-	}
-	if input.GitHubIssueURL != nil || input.GitHubPRURL != nil || input.N8NExecutionID != nil {
-		if _, err := service.repository.UpdateWorkflowLinks(ctx, input.WorkflowID, githubIssueURL, githubPRURL, n8nExecutionID, now); err != nil {
-			return WorkflowDetail{}, err
-		}
-	}
-	if input.StepKey != nil && input.StepStatus != nil {
-		if err := service.repository.UpdateStep(ctx, input.WorkflowID, *input.StepKey, *input.StepStatus, input.ErrorMessage, now); err != nil {
-			return WorkflowDetail{}, err
-		}
 	}
 	return service.repository.GetWorkflow(ctx, input.WorkflowID)
 }
@@ -360,26 +381,32 @@ func (service *Service) approvalAction(ctx context.Context, workflowID string, s
 	if err != nil {
 		return WorkflowDetail{}, err
 	}
-	if _, err := service.repository.CreateApproval(ctx, approval); err != nil {
-		return WorkflowDetail{}, err
-	}
-	if _, err := service.repository.UpdateWorkflowStatus(ctx, workflowID, status, now); err != nil {
-		return WorkflowDetail{}, err
-	}
 	var stepError *string
 	if stepStatus == domain.StepStatusFailed {
 		message := string(decision)
 		stepError = &message
-	}
-	if err := service.repository.UpdateStep(ctx, workflowID, stepKey, stepStatus, stepError, now); err != nil {
-		return WorkflowDetail{}, err
 	}
 	message := fmt.Sprintf("%s decision recorded for %s", decision, stepKey)
 	event, err := domain.NewEvent(workflowID, domain.EventSourceAnton, string(decision), message, nil, now)
 	if err != nil {
 		return WorkflowDetail{}, err
 	}
-	if _, err := service.repository.CreateEvent(ctx, event); err != nil {
+
+	if err := service.repository.WithTx(ctx, func(repo Repository) error {
+		if _, err := repo.CreateApproval(ctx, approval); err != nil {
+			return err
+		}
+		if _, err := repo.UpdateWorkflowStatus(ctx, workflowID, status, now); err != nil {
+			return err
+		}
+		if err := repo.UpdateStep(ctx, workflowID, stepKey, stepStatus, stepError, now); err != nil {
+			return err
+		}
+		if _, err := repo.CreateEvent(ctx, event); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return WorkflowDetail{}, err
 	}
 
@@ -404,27 +431,49 @@ func (service *Service) approvalAction(ctx context.Context, workflowID string, s
 
 func (service *Service) markWorkflowFailed(ctx context.Context, workflowID string, stepKey domain.StepKey, eventType string, message string) (WorkflowDetail, error) {
 	now := service.now().UTC()
-	_, _ = service.repository.UpdateWorkflowStatus(ctx, workflowID, domain.WorkflowStatusFailed, now)
-	_ = service.repository.UpdateStep(ctx, workflowID, stepKey, domain.StepStatusFailed, &message, now)
 	event, err := domain.NewEvent(workflowID, domain.EventSourceSystem, eventType, message, nil, now)
-	if err == nil {
-		_, _ = service.repository.CreateEvent(ctx, event)
+	if err != nil {
+		return WorkflowDetail{}, err
+	}
+	if err := service.repository.WithTx(ctx, func(repo Repository) error {
+		if _, err := repo.UpdateWorkflowStatus(ctx, workflowID, domain.WorkflowStatusFailed, now); err != nil {
+			return err
+		}
+		if err := repo.UpdateStep(ctx, workflowID, stepKey, domain.StepStatusFailed, &message, now); err != nil {
+			return err
+		}
+		if _, err := repo.CreateEvent(ctx, event); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return WorkflowDetail{}, err
 	}
 	return service.repository.GetWorkflow(ctx, workflowID)
 }
 
-func (service *Service) applyEventProgress(ctx context.Context, workflowID string, eventType string, now time.Time) {
+func (service *Service) applyEventProgress(ctx context.Context, repo Repository, workflowID string, eventType string, now time.Time) error {
 	switch eventType {
 	case "spec_generated":
-		_, _ = service.repository.UpdateWorkflowStatus(ctx, workflowID, domain.WorkflowStatusSpecReview, now)
-		_ = service.repository.UpdateStep(ctx, workflowID, domain.StepKeySystemAnalysis, domain.StepStatusDone, nil, now)
+		if _, err := repo.UpdateWorkflowStatus(ctx, workflowID, domain.WorkflowStatusSpecReview, now); err != nil {
+			return err
+		}
+		return repo.UpdateStep(ctx, workflowID, domain.StepKeySystemAnalysis, domain.StepStatusDone, nil, now)
 	case "architecture_generated":
-		_, _ = service.repository.UpdateWorkflowStatus(ctx, workflowID, domain.WorkflowStatusArchitectureReview, now)
-		_ = service.repository.UpdateStep(ctx, workflowID, domain.StepKeyArchitecture, domain.StepStatusDone, nil, now)
+		if _, err := repo.UpdateWorkflowStatus(ctx, workflowID, domain.WorkflowStatusArchitectureReview, now); err != nil {
+			return err
+		}
+		return repo.UpdateStep(ctx, workflowID, domain.StepKeyArchitecture, domain.StepStatusDone, nil, now)
 	case "ready_for_implementation":
-		_, _ = service.repository.UpdateWorkflowStatus(ctx, workflowID, domain.WorkflowStatusReadyForImplementation, now)
-		_ = service.repository.UpdateStep(ctx, workflowID, domain.StepKeyCodexPromptGenerated, domain.StepStatusDone, nil, now)
-		_ = service.repository.UpdateStep(ctx, workflowID, domain.StepKeyReadyForImplementation, domain.StepStatusDone, nil, now)
+		if _, err := repo.UpdateWorkflowStatus(ctx, workflowID, domain.WorkflowStatusReadyForImplementation, now); err != nil {
+			return err
+		}
+		if err := repo.UpdateStep(ctx, workflowID, domain.StepKeyCodexPromptGenerated, domain.StepStatusDone, nil, now); err != nil {
+			return err
+		}
+		return repo.UpdateStep(ctx, workflowID, domain.StepKeyReadyForImplementation, domain.StepStatusDone, nil, now)
+	default:
+		return nil
 	}
 }
 

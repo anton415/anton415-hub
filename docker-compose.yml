@@ -97,7 +97,7 @@ services:
       retries: 10
 
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:2.20.9
     ports:
       - "5678:5678"
     environment:
@@ -116,7 +116,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.2}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-5}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-20250514}
       GITHUB_TOKEN: ${ORCHESTRATOR_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}
       GITHUB_API_VERSION: ${GITHUB_API_VERSION:-2026-03-10}
       ORCHESTRATOR_GIT_AUTHOR_NAME: ${ORCHESTRATOR_GIT_AUTHOR_NAME:-anton415-orchestrator}

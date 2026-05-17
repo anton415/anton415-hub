@@ -23,18 +23,43 @@ const (
 
 type Repository struct {
 	pool *pgxpool.Pool
+	db   dbExecutor
 }
 
 type rowScanner interface {
 	Scan(dest ...any) error
 }
 
+type dbExecutor interface {
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+}
+
 func NewRepository(pool *pgxpool.Pool) *Repository {
-	return &Repository{pool: pool}
+	return &Repository{pool: pool, db: pool}
+}
+
+func (repo *Repository) WithTx(ctx context.Context, fn func(application.Repository) error) error {
+	tx, err := repo.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin orchestrator transaction: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	if err := fn(&Repository{pool: repo.pool, db: tx}); err != nil {
+		return err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit orchestrator transaction: %w", err)
+	}
+	return nil
 }
 
 func (repo *Repository) ListProjects(ctx context.Context) ([]domain.Project, error) {
-	rows, err := repo.pool.Query(ctx, `
+	rows, err := repo.db.Query(ctx, `
 		SELECT id::text, name, github_owner, github_repo, default_branch, config_path, status, created_at, updated_at
 		FROM orchestrator_projects
 		ORDER BY created_at DESC, id DESC
@@ -59,7 +84,7 @@ func (repo *Repository) ListProjects(ctx context.Context) ([]domain.Project, err
 }
 
 func (repo *Repository) GetProject(ctx context.Context, id string) (domain.Project, error) {
-	project, err := scanProject(repo.pool.QueryRow(ctx, `
+	project, err := scanProject(repo.db.QueryRow(ctx, `
 		SELECT id::text, name, github_owner, github_repo, default_branch, config_path, status, created_at, updated_at
 		FROM orchestrator_projects
 		WHERE id::text = $1
@@ -74,7 +99,7 @@ func (repo *Repository) GetProject(ctx context.Context, id string) (domain.Proje
 }
 
 func (repo *Repository) CreateProject(ctx context.Context, project domain.Project) (domain.Project, error) {
-	created, err := scanProject(repo.pool.QueryRow(ctx, `
+	created, err := scanProject(repo.db.QueryRow(ctx, `
 		INSERT INTO orchestrator_projects (name, github_owner, github_repo, default_branch, config_path, status, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id::text, name, github_owner, github_repo, default_branch, config_path, status, created_at, updated_at
@@ -89,7 +114,7 @@ func (repo *Repository) CreateProject(ctx context.Context, project domain.Projec
 }
 
 func (repo *Repository) UpdateProject(ctx context.Context, project domain.Project) (domain.Project, error) {
-	updated, err := scanProject(repo.pool.QueryRow(ctx, `
+	updated, err := scanProject(repo.db.QueryRow(ctx, `
 		UPDATE orchestrator_projects
 		SET name = $2,
 		    github_owner = $3,
@@ -113,7 +138,7 @@ func (repo *Repository) UpdateProject(ctx context.Context, project domain.Projec
 }
 
 func (repo *Repository) DeleteProject(ctx context.Context, id string) error {
-	tag, err := repo.pool.Exec(ctx, `
+	tag, err := repo.db.Exec(ctx, `
 		DELETE FROM orchestrator_projects
 		WHERE id::text = $1
 	`, id)
@@ -127,7 +152,7 @@ func (repo *Repository) DeleteProject(ctx context.Context, id string) error {
 }
 
 func (repo *Repository) ListWorkflows(ctx context.Context) ([]application.WorkflowSummary, error) {
-	rows, err := repo.pool.Query(ctx, `
+	rows, err := repo.db.Query(ctx, `
 		SELECT
 			w.id::text, w.project_id::text, w.feature_id, w.title, w.module, w.problem, w.status, w.github_issue_url, w.github_pr_url, w.n8n_execution_id, w.created_at, w.updated_at,
 			p.id::text, p.name, p.github_owner, p.github_repo, p.default_branch, p.config_path, p.status, p.created_at, p.updated_at,
@@ -159,7 +184,7 @@ func (repo *Repository) ListWorkflows(ctx context.Context) ([]application.Workfl
 }
 
 func (repo *Repository) GetWorkflow(ctx context.Context, id string) (application.WorkflowDetail, error) {
-	detail, err := repo.getWorkflowBase(ctx, repo.pool, id)
+	detail, err := repo.getWorkflowBase(ctx, repo.db, id)
 	if err != nil {
 		return application.WorkflowDetail{}, err
 	}
@@ -206,6 +231,9 @@ func (repo *Repository) CreateWorkflow(ctx context.Context, workflow domain.Work
 		WHERE id::text = $1
 		RETURNING id::text, project_id::text, feature_id, title, module, problem, status, github_issue_url, github_pr_url, n8n_execution_id, created_at, updated_at
 	`, workflow.ProjectID, workflow.FeatureID, workflow.Title, nullableString(workflow.Module), workflow.Problem, workflow.Status, nullableString(workflow.GitHubIssueURL), nullableString(workflow.GitHubPRURL), nullableString(workflow.N8NExecutionID), workflow.CreatedAt, workflow.UpdatedAt))
+	if isPostgresCode(err, uniqueViolation) {
+		return application.WorkflowDetail{}, domain.ErrDuplicateWorkflow
+	}
 	if isPostgresCode(err, foreignKeyViolation) || errors.Is(err, pgx.ErrNoRows) {
 		return application.WorkflowDetail{}, application.ErrNotFound
 	}
@@ -233,7 +261,7 @@ func (repo *Repository) CreateWorkflow(ctx context.Context, workflow domain.Work
 }
 
 func (repo *Repository) UpdateWorkflowStatus(ctx context.Context, id string, status domain.WorkflowStatus, now time.Time) (domain.Workflow, error) {
-	workflow, err := scanWorkflow(repo.pool.QueryRow(ctx, `
+	workflow, err := scanWorkflow(repo.db.QueryRow(ctx, `
 		UPDATE orchestrator_workflows
 		SET status = $2,
 		    updated_at = $3
@@ -250,7 +278,7 @@ func (repo *Repository) UpdateWorkflowStatus(ctx context.Context, id string, sta
 }
 
 func (repo *Repository) UpdateWorkflowLinks(ctx context.Context, id string, githubIssueURL *string, githubPRURL *string, n8nExecutionID *string, now time.Time) (domain.Workflow, error) {
-	workflow, err := scanWorkflow(repo.pool.QueryRow(ctx, `
+	workflow, err := scanWorkflow(repo.db.QueryRow(ctx, `
 		UPDATE orchestrator_workflows
 		SET github_issue_url = COALESCE($2, github_issue_url),
 		    github_pr_url = COALESCE($3, github_pr_url),
@@ -269,7 +297,7 @@ func (repo *Repository) UpdateWorkflowLinks(ctx context.Context, id string, gith
 }
 
 func (repo *Repository) UpdateStep(ctx context.Context, workflowID string, stepKey domain.StepKey, status domain.StepStatus, errorMessage *string, now time.Time) error {
-	tag, err := repo.pool.Exec(ctx, `
+	tag, err := repo.db.Exec(ctx, `
 		UPDATE orchestrator_steps
 		SET status = $3,
 		    started_at = CASE
@@ -294,7 +322,7 @@ func (repo *Repository) UpdateStep(ctx context.Context, workflowID string, stepK
 }
 
 func (repo *Repository) CreateArtifact(ctx context.Context, artifact domain.Artifact) (domain.Artifact, error) {
-	created, err := insertArtifact(ctx, repo.pool, artifact)
+	created, err := insertArtifact(ctx, repo.db, artifact)
 	if isPostgresCode(err, foreignKeyViolation) {
 		return domain.Artifact{}, application.ErrNotFound
 	}
@@ -305,7 +333,7 @@ func (repo *Repository) CreateArtifact(ctx context.Context, artifact domain.Arti
 }
 
 func (repo *Repository) CreateApproval(ctx context.Context, approval domain.Approval) (domain.Approval, error) {
-	created, err := insertApproval(ctx, repo.pool, approval)
+	created, err := insertApproval(ctx, repo.db, approval)
 	if isPostgresCode(err, foreignKeyViolation) {
 		return domain.Approval{}, application.ErrNotFound
 	}
@@ -316,7 +344,7 @@ func (repo *Repository) CreateApproval(ctx context.Context, approval domain.Appr
 }
 
 func (repo *Repository) CreateEvent(ctx context.Context, event domain.Event) (domain.Event, error) {
-	created, err := insertEvent(ctx, repo.pool, event)
+	created, err := insertEvent(ctx, repo.db, event)
 	if isPostgresCode(err, foreignKeyViolation) {
 		return domain.Event{}, application.ErrNotFound
 	}
@@ -401,11 +429,10 @@ func insertEvent(ctx context.Context, db queryer, event domain.Event) (domain.Ev
 func (repo *Repository) getWorkflowBase(ctx context.Context, db interface {
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 }, id string) (application.WorkflowDetail, error) {
-	summary, err := scanWorkflowSummary(db.QueryRow(ctx, `
+	detail, err := scanWorkflowBase(db.QueryRow(ctx, `
 		SELECT
 			w.id::text, w.project_id::text, w.feature_id, w.title, w.module, w.problem, w.status, w.github_issue_url, w.github_pr_url, w.n8n_execution_id, w.created_at, w.updated_at,
-			p.id::text, p.name, p.github_owner, p.github_repo, p.default_branch, p.config_path, p.status, p.created_at, p.updated_at,
-			0::bigint, 0::bigint, 0::bigint, 0::bigint
+			p.id::text, p.name, p.github_owner, p.github_repo, p.default_branch, p.config_path, p.status, p.created_at, p.updated_at
 		FROM orchestrator_workflows w
 		JOIN orchestrator_projects p ON p.id = w.project_id
 		WHERE w.id::text = $1
@@ -416,14 +443,11 @@ func (repo *Repository) getWorkflowBase(ctx context.Context, db interface {
 	if err != nil {
 		return application.WorkflowDetail{}, err
 	}
-	return application.WorkflowDetail{
-		Workflow: summary.Workflow,
-		Project:  summary.Project,
-	}, nil
+	return detail, nil
 }
 
 func (repo *Repository) listSteps(ctx context.Context, workflowID string) ([]domain.Step, error) {
-	rows, err := repo.pool.Query(ctx, `
+	rows, err := repo.db.Query(ctx, `
 		SELECT id::text, workflow_id::text, step_key, title, agent, status, started_at, finished_at, error_message
 		FROM orchestrator_steps
 		WHERE workflow_id::text = $1
@@ -463,7 +487,7 @@ func (repo *Repository) listSteps(ctx context.Context, workflowID string) ([]dom
 }
 
 func (repo *Repository) listArtifacts(ctx context.Context, workflowID string) ([]domain.Artifact, error) {
-	rows, err := repo.pool.Query(ctx, `
+	rows, err := repo.db.Query(ctx, `
 		SELECT id::text, workflow_id::text, artifact_type, title, github_url, local_preview, created_by_agent, created_at
 		FROM orchestrator_artifacts
 		WHERE workflow_id::text = $1
@@ -489,7 +513,7 @@ func (repo *Repository) listArtifacts(ctx context.Context, workflowID string) ([
 }
 
 func (repo *Repository) listApprovals(ctx context.Context, workflowID string) ([]domain.Approval, error) {
-	rows, err := repo.pool.Query(ctx, `
+	rows, err := repo.db.Query(ctx, `
 		SELECT id::text, workflow_id::text, step_key, decision, comment, decided_by, decided_at
 		FROM orchestrator_approvals
 		WHERE workflow_id::text = $1
@@ -515,7 +539,7 @@ func (repo *Repository) listApprovals(ctx context.Context, workflowID string) ([
 }
 
 func (repo *Repository) listEvents(ctx context.Context, workflowID string) ([]domain.Event, error) {
-	rows, err := repo.pool.Query(ctx, `
+	rows, err := repo.db.Query(ctx, `
 		SELECT id::text, workflow_id::text, source, event_type, message, payload_json::text, created_at
 		FROM orchestrator_events
 		WHERE workflow_id::text = $1
@@ -566,6 +590,35 @@ func scanWorkflow(row rowScanner) (domain.Workflow, error) {
 	workflow.GitHubPRURL = stringPtr(prURL)
 	workflow.N8NExecutionID = stringPtr(n8nExecutionID)
 	return workflow, nil
+}
+
+func scanWorkflowBase(row rowScanner) (application.WorkflowDetail, error) {
+	var workflow domain.Workflow
+	var project domain.Project
+	var workflowStatus string
+	var projectStatus string
+	var module sql.NullString
+	var issueURL sql.NullString
+	var prURL sql.NullString
+	var n8nExecutionID sql.NullString
+
+	if err := row.Scan(
+		&workflow.ID, &workflow.ProjectID, &workflow.FeatureID, &workflow.Title, &module, &workflow.Problem, &workflowStatus, &issueURL, &prURL, &n8nExecutionID, &workflow.CreatedAt, &workflow.UpdatedAt,
+		&project.ID, &project.Name, &project.GitHubOwner, &project.GitHubRepo, &project.DefaultBranch, &project.ConfigPath, &projectStatus, &project.CreatedAt, &project.UpdatedAt,
+	); err != nil {
+		return application.WorkflowDetail{}, err
+	}
+
+	workflow.Status = domain.WorkflowStatus(workflowStatus)
+	workflow.Module = stringPtr(module)
+	workflow.GitHubIssueURL = stringPtr(issueURL)
+	workflow.GitHubPRURL = stringPtr(prURL)
+	workflow.N8NExecutionID = stringPtr(n8nExecutionID)
+	project.Status = domain.ProjectStatus(projectStatus)
+	return application.WorkflowDetail{
+		Workflow: workflow,
+		Project:  project,
+	}, nil
 }
 
 func scanWorkflowSummary(row rowScanner) (application.WorkflowSummary, error) {
