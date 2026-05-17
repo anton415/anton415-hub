@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -77,7 +78,12 @@ func (client *Client) postJSON(ctx context.Context, targetURL string, payload an
 	defer response.Body.Close()
 
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
-		return fmt.Errorf("n8n webhook returned %s", response.Status)
+		responseBody, _ := io.ReadAll(io.LimitReader(response.Body, 1024))
+		message := strings.TrimSpace(string(responseBody))
+		if message == "" {
+			return fmt.Errorf("n8n webhook returned %s", response.Status)
+		}
+		return fmt.Errorf("n8n webhook returned %s: %s", response.Status, message)
 	}
 	return nil
 }
