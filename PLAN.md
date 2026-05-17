@@ -45,7 +45,7 @@
   - Источник: Accessibility 1
   - Acceptance: ячейки дня кликаются с клавиатуры
 
-- [ ] 🟠 **P1.2.3** Добавить `aria-label` всем icon-only кнопкам
+- [x] ✅ 🟠 **P1.2.3** Добавить `aria-label` всем icon-only кнопкам
   - Файлы: `TasksPage.tsx:621` (logout X), `TasksPage.tsx:507-515` (more), `TasksPage.tsx:432-440` (project more), chevron'ы
   - Источник: Accessibility 4
   - Acceptance: каждая иконочная кнопка имеет текстовое описание

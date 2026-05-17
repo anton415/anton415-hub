@@ -464,10 +464,13 @@ export function TasksPage() {
         >
           {hasSubtasks ? (
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 toggleTaskCollapse(task.id);
               }}
+              aria-label={isCollapsed ? `Развернуть подзадачи: ${task.title}` : `Свернуть подзадачи: ${task.title}`}
+              aria-expanded={!isCollapsed}
               className="hover:bg-accent/50 rounded p-0.5 cursor-pointer shrink-0 mt-0.5"
             >
               {isCollapsed ? <ChevronRight className="size-3" /> : <ChevronDown className="size-3" />}
@@ -510,10 +513,12 @@ export function TasksPage() {
             </div>
           </div>
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               openTaskSheet(task);
             }}
+            aria-label={`Открыть задачу: ${task.title}`}
             className="opacity-0 group-hover:opacity-100 p-1 shrink-0"
           >
             <MoreHorizontal className="size-4" />
@@ -583,6 +588,7 @@ export function TasksPage() {
                 size="icon"
                 className="md:hidden"
                 onClick={() => setIsMobileSidebarOpen(true)}
+                aria-label="Открыть меню"
               >
                 <Menu className="size-5" />
               </Button>
@@ -621,9 +627,10 @@ export function TasksPage() {
               size="sm"
               className="md:h-9"
               onClick={() => logoutAndRedirect(navigate)}
+              aria-label="Выход"
             >
               <span className="hidden sm:inline">Выход</span>
-              <X className="size-4 sm:hidden" />
+              <X className="size-4 sm:hidden" aria-hidden="true" />
             </Button>
           </div>
         </div>
@@ -656,7 +663,12 @@ export function TasksPage() {
                 onKeyDown={(e) => e.key === "Enter" && void handleAddTask()}
                 className="flex-1 h-9"
               />
-              <Button size="icon" onClick={() => void handleAddTask()} className="h-9 w-9 shrink-0">
+              <Button
+                size="icon"
+                onClick={() => void handleAddTask()}
+                className="h-9 w-9 shrink-0"
+                aria-label="Добавить задачу"
+              >
                 <Plus className="size-4" />
               </Button>
             </div>
@@ -859,6 +871,7 @@ export function TasksPage() {
                       variant="ghost"
                       className="shrink-0"
                       onClick={() => void handleAddSubtask()}
+                      aria-label="Добавить подзадачу"
                     >
                       <Plus className="size-4" />
                     </Button>
