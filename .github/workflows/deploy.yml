@@ -145,6 +145,11 @@ jobs:
             ENV_FILE="${APP_DIR}/app.env"
             SECRETS_FILE="${APP_DIR}/secrets.env"
             POSTGRES_ENV_FILE="${APP_DIR}/postgres.env"
+            N8N_ENV_FILE="${APP_DIR}/n8n.env"
+            N8N_POSTGRES_ENV_FILE="${APP_DIR}/n8n-postgres.env"
+            N8N_WORKFLOW_DIR="${APP_DIR}/n8n/workflows"
+            N8N_WORKFLOW_ID="orchestrator-ai-feature-delivery-v0"
+            N8N_WORKFLOW_FILE="${N8N_WORKFLOW_DIR}/${N8N_WORKFLOW_ID}.json"
             MIGRATE_SCRIPT="${APP_DIR}/run-migrations.sh"
             DB_MIGRATION_MARKER="${APP_DIR}/.anton415-hub-db-migrated"
             DB_NAME="anton415_hub"
@@ -227,6 +232,59 @@ jobs:
               rm -f "$tmp"
             }
 
+            write_n8n_env_files() {
+              n8n_db_password="$(read_env "$SECRETS_FILE" N8N_POSTGRES_PASSWORD || true)"
+              n8n_encryption_key="$(read_env "$SECRETS_FILE" N8N_ENCRYPTION_KEY || true)"
+              callback_token="$(read_env "$SECRETS_FILE" ORCHESTRATOR_N8N_CALLBACK_TOKEN || true)"
+              openai_api_key="$(read_env "$SECRETS_FILE" OPENAI_API_KEY || true)"
+              openai_model="$(read_env "$SECRETS_FILE" OPENAI_MODEL || true)"
+              anthropic_api_key="$(read_env "$SECRETS_FILE" ANTHROPIC_API_KEY || true)"
+              anthropic_model="$(read_env "$SECRETS_FILE" ANTHROPIC_MODEL || true)"
+              github_token="$(read_env "$SECRETS_FILE" ORCHESTRATOR_GITHUB_TOKEN || true)"
+              if [ -z "$github_token" ]; then
+                github_token="$(read_env "$SECRETS_FILE" GITHUB_TOKEN || true)"
+              fi
+              github_api_version="$(read_env "$SECRETS_FILE" GITHUB_API_VERSION || true)"
+              git_author_name="$(read_env "$SECRETS_FILE" ORCHESTRATOR_GIT_AUTHOR_NAME || true)"
+              git_author_email="$(read_env "$SECRETS_FILE" ORCHESTRATOR_GIT_AUTHOR_EMAIL || true)"
+
+              tmp_postgres="$(mktemp)"
+              {
+                printf 'POSTGRES_DB=n8n\n'
+                printf 'POSTGRES_USER=n8n\n'
+                printf 'POSTGRES_PASSWORD=%s\n' "$n8n_db_password"
+              } > "$tmp_postgres"
+              sudo install -m 0600 "$tmp_postgres" "$N8N_POSTGRES_ENV_FILE"
+              rm -f "$tmp_postgres"
+
+              tmp_n8n="$(mktemp)"
+              {
+                printf 'N8N_HOST=n8n\n'
+                printf 'N8N_PORT=5678\n'
+                printf 'N8N_PROTOCOL=http\n'
+                printf 'N8N_ENCRYPTION_KEY=%s\n' "$n8n_encryption_key"
+                printf 'N8N_DIAGNOSTICS_ENABLED=false\n'
+                printf 'N8N_VERSION_NOTIFICATIONS_ENABLED=false\n'
+                printf 'DB_TYPE=postgresdb\n'
+                printf 'DB_POSTGRESDB_HOST=n8n-postgres\n'
+                printf 'DB_POSTGRESDB_DATABASE=n8n\n'
+                printf 'DB_POSTGRESDB_USER=n8n\n'
+                printf 'DB_POSTGRESDB_PASSWORD=%s\n' "$n8n_db_password"
+                printf 'ORCHESTRATOR_HUB_API_BASE_URL=http://app:8080\n'
+                printf 'ORCHESTRATOR_N8N_CALLBACK_TOKEN=%s\n' "$callback_token"
+                printf 'OPENAI_API_KEY=%s\n' "$openai_api_key"
+                printf 'OPENAI_MODEL=%s\n' "${openai_model:-gpt-5.2}"
+                printf 'ANTHROPIC_API_KEY=%s\n' "$anthropic_api_key"
+                printf 'ANTHROPIC_MODEL=%s\n' "${anthropic_model:-claude-sonnet-4-20250514}"
+                printf 'GITHUB_TOKEN=%s\n' "$github_token"
+                printf 'GITHUB_API_VERSION=%s\n' "${github_api_version:-2026-03-10}"
+                printf 'ORCHESTRATOR_GIT_AUTHOR_NAME=%s\n' "${git_author_name:-anton415-orchestrator}"
+                printf 'ORCHESTRATOR_GIT_AUTHOR_EMAIL=%s\n' "${git_author_email:-orchestrator@anton415.local}"
+              } > "$tmp_n8n"
+              sudo install -m 0600 "$tmp_n8n" "$N8N_ENV_FILE"
+              rm -f "$tmp_n8n"
+            }
+
             copy_legacy_secret_if_missing() {
               key="$1"
               if env_has_nonempty_key "$SECRETS_FILE" "$key"; then
@@ -275,7 +333,32 @@ jobs:
               return 1
             }
 
-            sudo mkdir -p "${APP_DIR}/caddy" "${APP_DIR}/migrations"
+            wait_for_n8n_postgres() {
+              for _ in $(seq 1 30); do
+                if sudo docker compose -f "$COMPOSE_FILE" exec -T n8n-postgres pg_isready -U n8n -d n8n; then
+                  return 0
+                fi
+                sleep 2
+              done
+              echo "n8n PostgreSQL did not become ready in time" >&2
+              return 1
+            }
+
+            import_orchestrator_n8n_workflow() {
+              if [ ! -f "$N8N_WORKFLOW_FILE" ]; then
+                echo "n8n workflow file not found: $N8N_WORKFLOW_FILE" >&2
+                exit 66
+              fi
+
+              sudo docker compose -f "$COMPOSE_FILE" stop n8n || true
+              sudo docker compose -f "$COMPOSE_FILE" up -d n8n-postgres
+              wait_for_n8n_postgres
+              sudo docker compose -f "$COMPOSE_FILE" run --rm -T n8n import:workflow --input="/opt/n8n/workflows/${N8N_WORKFLOW_ID}.json"
+              sudo docker compose -f "$COMPOSE_FILE" run --rm -T n8n update:workflow --id="$N8N_WORKFLOW_ID" --active=true
+              sudo docker compose -f "$COMPOSE_FILE" run --rm -T n8n publish:workflow --id="$N8N_WORKFLOW_ID"
+            }
+
+            sudo mkdir -p "${APP_DIR}/caddy" "${APP_DIR}/migrations" "$N8N_WORKFLOW_DIR"
             if [ ! -f "$ENV_FILE" ] && [ -f "${OLD_APP_DIR}/app.env" ]; then
               sudo install -m 0600 "${OLD_APP_DIR}/app.env" "$ENV_FILE"
             fi
@@ -303,6 +386,9 @@ jobs:
             upsert_env AUTH_RATE_LIMIT_WINDOW "1m"
             upsert_env LOG_LEVEL "info"
             upsert_env SHUTDOWN_TIMEOUT "10s"
+            upsert_env ORCHESTRATOR_N8N_FEATURE_INTAKE_URL "http://n8n:5678/webhook/orchestrator-feature-intake"
+            upsert_env ORCHESTRATOR_N8N_APPROVAL_URL "http://n8n:5678/webhook/orchestrator-approval"
+            upsert_env ORCHESTRATOR_N8N_OUTBOUND_TOKEN ""
 
             if [ ! -x "${APP_DIR}/sync-lockbox-env.sh" ] && [ -f "${OLD_APP_DIR}/sync-lockbox-env.sh" ]; then
               sudo cp "${OLD_APP_DIR}/sync-lockbox-env.sh" "${APP_DIR}/sync-lockbox-env.sh"
@@ -341,7 +427,17 @@ jobs:
             require_env_key "$SECRETS_FILE" AUTH_ALLOWED_EMAILS
             require_env_key "$SECRETS_FILE" YANDEX_OAUTH_CLIENT_ID
             require_env_key "$SECRETS_FILE" YANDEX_OAUTH_CLIENT_SECRET
+            require_env_key "$SECRETS_FILE" ORCHESTRATOR_N8N_CALLBACK_TOKEN
+            require_env_key "$SECRETS_FILE" N8N_POSTGRES_PASSWORD
+            require_env_key "$SECRETS_FILE" N8N_ENCRYPTION_KEY
+            require_env_key "$SECRETS_FILE" OPENAI_API_KEY
+            require_env_key "$SECRETS_FILE" ANTHROPIC_API_KEY
+            if ! env_has_nonempty_key "$SECRETS_FILE" ORCHESTRATOR_GITHUB_TOKEN && ! env_has_nonempty_key "$SECRETS_FILE" GITHUB_TOKEN; then
+              echo "ORCHESTRATOR_GITHUB_TOKEN or GITHUB_TOKEN is required in $SECRETS_FILE after Lockbox sync" >&2
+              exit 64
+            fi
             write_postgres_env_file
+            write_n8n_env_files
             for stale_secret_key in DATABASE_URL POSTGRES_PASSWORD AUTH_ALLOWED_EMAILS; do
               remove_env "$stale_secret_key"
             done
@@ -435,6 +531,19 @@ jobs:
                   timeout: 5s
                   retries: 12
 
+              n8n-postgres:
+                image: postgres:16-alpine
+                restart: unless-stopped
+                env_file:
+                  - /opt/anton415-hub/n8n-postgres.env
+                volumes:
+                  - n8n_postgres_data:/var/lib/postgresql/data
+                healthcheck:
+                  test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 12
+
               migrate:
                 image: migrate/migrate:v4.18.3
                 restart: "no"
@@ -461,6 +570,20 @@ jobs:
                   timeout: 5s
                   retries: 5
 
+              n8n:
+                image: n8nio/n8n:2.20.9
+                restart: unless-stopped
+                env_file:
+                  - /opt/anton415-hub/n8n.env
+                expose:
+                  - "5678"
+                volumes:
+                  - n8n_data:/home/node/.n8n
+                  - /opt/anton415-hub/n8n/workflows:/opt/n8n/workflows:ro
+                depends_on:
+                  n8n-postgres:
+                    condition: service_healthy
+
               caddy:
                 image: caddy:2.8-alpine
                 restart: unless-stopped
@@ -476,6 +599,8 @@ jobs:
 
             volumes:
               postgres_data:
+              n8n_postgres_data:
+              n8n_data:
               caddy_data:
               caddy_config:
             COMPOSE
@@ -486,6 +611,9 @@ jobs:
             trap 'sudo docker rm "$container_id" >/dev/null 2>&1 || true' EXIT
             sudo rm -rf "${APP_DIR}/migrations"
             sudo docker cp "$container_id:/app/migrations" "${APP_DIR}/migrations"
+            sudo rm -rf "${APP_DIR}/n8n/workflows"
+            sudo mkdir -p "${APP_DIR}/n8n"
+            sudo docker cp "$container_id:/app/deploy/n8n/workflows" "${APP_DIR}/n8n/workflows"
             sudo docker rm "$container_id"
             trap - EXIT
 
@@ -518,6 +646,8 @@ jobs:
               sudo docker compose -f "$OLD_COMPOSE_FILE" stop app caddy || true
             fi
             sudo "$MIGRATE_SCRIPT"
+            import_orchestrator_n8n_workflow
+            sudo docker compose -f "$COMPOSE_FILE" up -d --no-deps --force-recreate n8n
             sudo docker compose -f "$COMPOSE_FILE" up -d --no-deps --force-recreate app
             sudo docker compose -f "$COMPOSE_FILE" up -d --no-deps --force-recreate caddy
             sudo docker compose -f "$COMPOSE_FILE" exec -T app wget -qO- http://127.0.0.1:8080/health

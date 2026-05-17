@@ -30,8 +30,12 @@ Required runtime variables for the n8n service:
 - `ORCHESTRATOR_GITHUB_TOKEN` or `GITHUB_TOKEN`
 - `ORCHESTRATOR_HUB_API_BASE_URL`
 - `ORCHESTRATOR_N8N_CALLBACK_TOKEN`
+- `N8N_ENCRYPTION_KEY`
+- `N8N_POSTGRES_PASSWORD`
 
 The workflow intentionally reads secrets from environment variables and does not store API keys or tokens inside the exported JSON.
+
+Production deploys copy this workflow from the app image into `/opt/anton415-hub/n8n/workflows`, import it into n8n, set it active, publish the current version, and restart n8n so webhook changes take effect.
 
 ## Flow
 
