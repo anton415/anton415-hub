@@ -1,4 +1,4 @@
-import { LayoutDashboard, CheckSquare, Wallet, TrendingUp, Calendar, Target } from "lucide-react";
+import { LayoutDashboard, CheckSquare, Wallet, TrendingUp, Calendar, Target, Workflow } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -54,6 +54,15 @@ export function Dashboard() {
       status: "active",
       color: "bg-chart-5",
       path: "/calendar"
+    },
+    {
+      id: "orchestrator",
+      title: "AI Orchestrator",
+      description: "Workflow для AI-разработки",
+      icon: Workflow,
+      status: "active",
+      color: "bg-primary",
+      path: "/orchestrator"
     }
   ];
 

@@ -7,10 +7,13 @@ GO_FILES := $(shell find . -name "*.go" -not -path "./.git/*" -not -path "./apps
 MIGRATE_DATABASE_URL ?= postgres://anton415:anton415@postgres:5432/anton415_hub?sslmode=disable
 WEB_DIR := apps/web
 
-.PHONY: dev api web db stop test test-e2e test-integration lint build docker-build migrate-up migrate-down docker-config go-mod-tidy
+.PHONY: dev orchestrator-dev api web db n8n stop test test-e2e test-integration lint build docker-build migrate-up migrate-down docker-config go-mod-tidy
 
 dev:
 	$(COMPOSE) up postgres api web
+
+orchestrator-dev:
+	$(COMPOSE) up postgres n8n-postgres n8n api web
 
 api:
 	$(COMPOSE) up postgres api
@@ -20,6 +23,9 @@ web:
 
 db:
 	$(COMPOSE) up -d postgres
+
+n8n:
+	$(COMPOSE) up n8n-postgres n8n
 
 stop:
 	$(COMPOSE) down

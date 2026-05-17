@@ -14,36 +14,39 @@ import (
 const defaultDatabaseURL = "postgres://anton415:anton415@localhost:15432/anton415_hub?sslmode=disable"
 
 type Config struct {
-	AppEnv                string
-	AppVersion            string
-	DatabaseURL           string
-	HTTPAddr              string
-	LogLevel              string
-	ShutdownTimeout       time.Duration
-	WebOrigin             string
-	StaticDir             string
-	AuthAllowedEmails     []string
-	AuthCallbackBaseURL   string
-	AuthSuccessRedirect   string
-	AuthFailureRedirect   string
-	AuthSessionCookie     string
-	AuthCookieDomain      string
-	AuthSessionTTL        time.Duration
-	AuthTokenTTL          time.Duration
-	AuthCookieSecure      bool
-	AuthDevBypass         bool
-	AuthDevEmail          string
-	AuthRateLimitEnabled  bool
-	AuthRateLimitRequests int
-	AuthRateLimitWindow   time.Duration
-	EmailFrom             string
-	SMTPHost              string
-	SMTPPort              string
-	SMTPUsername          string
-	SMTPPassword          string
-	YandexOAuth           OAuthClientConfig
-	GitHubOAuth           OAuthClientConfig
-	VKOAuth               OAuthClientConfig
+	AppEnv                          string
+	AppVersion                      string
+	DatabaseURL                     string
+	HTTPAddr                        string
+	LogLevel                        string
+	ShutdownTimeout                 time.Duration
+	WebOrigin                       string
+	StaticDir                       string
+	AuthAllowedEmails               []string
+	AuthCallbackBaseURL             string
+	AuthSuccessRedirect             string
+	AuthFailureRedirect             string
+	AuthSessionCookie               string
+	AuthCookieDomain                string
+	AuthSessionTTL                  time.Duration
+	AuthTokenTTL                    time.Duration
+	AuthCookieSecure                bool
+	AuthDevBypass                   bool
+	AuthDevEmail                    string
+	AuthRateLimitEnabled            bool
+	AuthRateLimitRequests           int
+	AuthRateLimitWindow             time.Duration
+	EmailFrom                       string
+	SMTPHost                        string
+	SMTPPort                        string
+	SMTPUsername                    string
+	SMTPPassword                    string
+	YandexOAuth                     OAuthClientConfig
+	GitHubOAuth                     OAuthClientConfig
+	VKOAuth                         OAuthClientConfig
+	OrchestratorN8NFeatureIntakeURL string
+	OrchestratorN8NApprovalURL      string
+	OrchestratorN8NCallbackToken    string
 }
 
 type OAuthClientConfig struct {
@@ -133,6 +136,9 @@ func Load() (Config, error) {
 			TokenURL:     stringFromEnv("VK_OAUTH_TOKEN_URL", "https://oauth.vk.com/access_token"),
 			UserInfoURL:  stringFromEnv("VK_OAUTH_USERINFO_URL", "https://api.vk.com/method/users.get?v=5.199"),
 		},
+		OrchestratorN8NFeatureIntakeURL: stringFromEnv("ORCHESTRATOR_N8N_FEATURE_INTAKE_URL", ""),
+		OrchestratorN8NApprovalURL:      stringFromEnv("ORCHESTRATOR_N8N_APPROVAL_URL", ""),
+		OrchestratorN8NCallbackToken:    stringFromEnv("ORCHESTRATOR_N8N_CALLBACK_TOKEN", ""),
 	}
 
 	if err := validateConfig(cfg); err != nil {

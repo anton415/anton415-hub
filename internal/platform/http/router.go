@@ -21,6 +21,10 @@ import (
 	financehttp "github.com/anton415/anton415-hub/internal/finance/adapters/http"
 	financepostgres "github.com/anton415/anton415-hub/internal/finance/adapters/postgres"
 	financeapp "github.com/anton415/anton415-hub/internal/finance/application"
+	orchestratorhttp "github.com/anton415/anton415-hub/internal/orchestrator/adapters/http"
+	orchestratorn8n "github.com/anton415/anton415-hub/internal/orchestrator/adapters/n8n"
+	orchestratorpostgres "github.com/anton415/anton415-hub/internal/orchestrator/adapters/postgres"
+	orchestratorapp "github.com/anton415/anton415-hub/internal/orchestrator/application"
 	"github.com/anton415/anton415-hub/internal/platform/config"
 	todohttp "github.com/anton415/anton415-hub/internal/todo/adapters/http"
 	todopostgres "github.com/anton415/anton415-hub/internal/todo/adapters/postgres"
@@ -92,6 +96,20 @@ func NewRouter(deps Dependencies) http.Handler {
 			Income:   financeRepository,
 			Settings: financeRepository,
 		})
+		orchestratorRepository := orchestratorpostgres.NewRepository(deps.DB)
+		orchestratorN8N := orchestratorn8n.NewClient(orchestratorn8n.Config{
+			FeatureIntakeURL: deps.Config.OrchestratorN8NFeatureIntakeURL,
+			ApprovalURL:      deps.Config.OrchestratorN8NApprovalURL,
+			AuthToken:        deps.Config.OrchestratorN8NCallbackToken,
+		})
+		orchestratorService := orchestratorapp.NewService(orchestratorapp.Dependencies{
+			Repository: orchestratorRepository,
+			N8N:        orchestratorN8N,
+		})
+		orchestratorConfig := orchestratorhttp.Config{
+			CallbackToken: deps.Config.OrchestratorN8NCallbackToken,
+		}
+		r.Mount("/orchestrator/n8n", orchestratorhttp.NewCallbackRouter(orchestratorService, orchestratorConfig))
 		r.Group(func(r chi.Router) {
 			r.Use(authhttp.SessionMiddleware(authService, authConfig))
 			r.Get("/me", authhttp.MeHandler)
@@ -100,6 +118,7 @@ func NewRouter(deps Dependencies) http.Handler {
 				r.Use(authhttp.RequireAuthenticated)
 				r.Mount("/todo", todohttp.NewRouter(todoService))
 				r.Mount("/finance", financehttp.NewRouter(financeService))
+				r.Mount("/orchestrator", orchestratorhttp.NewUserRouter(orchestratorService, orchestratorConfig))
 			})
 		})
 	})
