@@ -18,7 +18,7 @@
 
 ### P1.1 Mock-данные и сломанные модули
 
-- [ ] 🔴 **P1.1.1** Удалить хардкод-события из `CalendarPage.tsx` и добавить auth-guard
+- [x] ✅ 🔴 **P1.1.1** Удалить хардкод-события из `CalendarPage.tsx` и добавить auth-guard
   - Файл: `apps/web/src/app/components/CalendarPage.tsx` (строки 99, 106–136)
   - Источник: Critical Issue 1, Task T1
   - Acceptance: после refresh нет фейковых событий; неавторизованный пользователь не видит UI до редиректа
