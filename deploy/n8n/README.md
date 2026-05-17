@@ -32,8 +32,10 @@ Required runtime variables for the n8n service:
 - `ORCHESTRATOR_N8N_CALLBACK_TOKEN`
 - `N8N_ENCRYPTION_KEY`
 - `N8N_POSTGRES_PASSWORD`
+- `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`
 
 The workflow intentionally reads secrets from environment variables and does not store API keys or tokens inside the exported JSON.
+For n8n 2.x this requires `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`; otherwise Code nodes cannot read `$env` and webhook executions fail before the AI call starts.
 
 Production deploys copy this workflow from the app image into `/opt/anton415-hub/n8n/workflows`, import it into n8n, set it active, publish the current version, and restart n8n so webhook changes take effect.
 

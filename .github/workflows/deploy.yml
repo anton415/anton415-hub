@@ -340,6 +340,7 @@ jobs:
                 printf 'N8N_ENCRYPTION_KEY=%s\n' "$n8n_encryption_key"
                 printf 'N8N_DIAGNOSTICS_ENABLED=false\n'
                 printf 'N8N_VERSION_NOTIFICATIONS_ENABLED=false\n'
+                printf 'N8N_BLOCK_ENV_ACCESS_IN_NODE=false\n'
                 printf 'DB_TYPE=postgresdb\n'
                 printf 'DB_POSTGRESDB_HOST=n8n-postgres\n'
                 printf 'DB_POSTGRESDB_DATABASE=n8n\n'

@@ -85,7 +85,7 @@ make n8n-import-orchestrator
 
 n8n imports workflows as inactive by default. After import, start the n8n UI with `make n8n`, open n8n, review the workflow named `orchestrator-ai-feature-delivery-v0`, and activate it.
 
-Production deploys import, activate, and publish this workflow automatically from the app image. Required production secrets live in Lockbox: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `ORCHESTRATOR_GITHUB_TOKEN`, `ORCHESTRATOR_N8N_CALLBACK_TOKEN`, `N8N_ENCRYPTION_KEY`, and `N8N_POSTGRES_PASSWORD`.
+Production deploys import, activate, and publish this workflow automatically from the app image. Required production secrets live in Lockbox: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `ORCHESTRATOR_GITHUB_TOKEN`, `ORCHESTRATOR_N8N_CALLBACK_TOKEN`, `N8N_ENCRYPTION_KEY`, and `N8N_POSTGRES_PASSWORD`. The n8n service also sets `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` because the MVP workflow reads these runtime values via `$env` inside Code nodes.
 
 The workflow uses two production webhook paths:
 
