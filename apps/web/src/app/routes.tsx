@@ -5,7 +5,6 @@ import { TasksPage } from "./components/TasksPage";
 import { FinancesPage } from "./components/FinancesPage";
 import { CalendarPage } from "./components/CalendarPage";
 import {
-  OrchestratorDemoPage,
   OrchestratorHomePage,
   OrchestratorProjectsPage,
   OrchestratorWorkflowPage
@@ -56,10 +55,6 @@ export const router = createBrowserRouter([
   {
     path: "/orchestrator/workflows/:workflowId",
     Component: OrchestratorWorkflowPage,
-  },
-  {
-    path: "/orchestrator/demo",
-    Component: OrchestratorDemoPage,
   },
   {
     path: "*",

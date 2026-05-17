@@ -9,10 +9,8 @@ import {
   GitBranch,
   Github,
   ListChecks,
-  Play,
   Plus,
   RefreshCw,
-  RotateCcw,
   ShieldCheck,
   Workflow,
   X
@@ -161,12 +159,6 @@ export function OrchestratorHomePage() {
                   <p className="text-sm text-muted-foreground">{state.data.workflows.length} total</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" asChild>
-                    <Link to="/orchestrator/demo">
-                      <Play className="size-4" />
-                      Demo
-                    </Link>
-                  </Button>
                   <Button variant="outline" asChild>
                     <Link to="/orchestrator/projects">
                       <Github className="size-4" />
@@ -556,98 +548,6 @@ export function OrchestratorWorkflowPage() {
             </aside>
           </div>
         )}
-      </main>
-    </OrchestratorFrame>
-  );
-}
-
-export function OrchestratorDemoPage() {
-  const { status } = useAuthGate();
-  const [stage, setStage] = useState(0);
-
-  const demoSteps = [
-    "Idea created",
-    "ChatGPT spec generated",
-    "Spec approved",
-    "Claude architecture generated",
-    "Architecture approved",
-    "Codex prompt generated",
-    "Ready for implementation"
-  ];
-  const artifacts = [
-    { title: "System specification", visible: stage >= 1 },
-    { title: "Architecture plan", visible: stage >= 3 },
-    { title: "Codex implementation prompt", visible: stage >= 5 },
-    { title: "GitHub issue", visible: stage >= 6 }
-  ];
-
-  if (status === "loading") {
-    return <LoadingScreen label="Загрузка demo..." />;
-  }
-
-  return (
-    <OrchestratorFrame title="Demo Mode" subtitle="Local replay">
-      <main className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="rounded-lg border bg-card">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
-            <div>
-              <h2 className="text-base font-medium">Add task filtering to Todo module</h2>
-              <p className="text-sm text-muted-foreground">anton415/anton415-hub</p>
-            </div>
-            <StatusBadge status={stage >= 6 ? "ready_for_implementation" : "system_analysis_running"} />
-          </div>
-          <div className="grid gap-3 p-5">
-            {demoSteps.map((step, index) => (
-              <div key={step} className="grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 rounded-md border px-3 py-2">
-                <StepIcon status={index < stage ? "done" : index === stage ? "running" : "pending"} />
-                <span className="truncate text-sm font-medium">{step}</span>
-                <Badge variant="outline">{index < stage ? "done" : index === stage ? "running" : "pending"}</Badge>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <aside className="grid content-start gap-6">
-          <section className="rounded-lg border bg-card">
-            <div className="border-b px-5 py-4">
-              <h2 className="text-base font-medium">Controls</h2>
-            </div>
-            <div className="grid gap-3 p-5">
-              <Button onClick={() => setStage(1)} disabled={stage !== 0}>
-                <Play className="size-4" />
-                Start Demo
-              </Button>
-              <Button variant="outline" onClick={() => setStage((current) => Math.min(current + 1, 6))} disabled={stage === 0 || stage >= 6}>
-                <Check className="size-4" />
-                Next Step
-              </Button>
-              <Button variant="outline" onClick={() => setStage(0)}>
-                <RotateCcw className="size-4" />
-                Reset Demo
-              </Button>
-              <Button variant="outline" asChild>
-                <Link to="/orchestrator">
-                  <ArrowLeft className="size-4" />
-                  Back
-                </Link>
-              </Button>
-            </div>
-          </section>
-
-          <section className="rounded-lg border bg-card">
-            <div className="border-b px-5 py-4">
-              <h2 className="text-base font-medium">Artifacts</h2>
-            </div>
-            <div className="grid gap-3 p-5">
-              {artifacts.map((artifact) => (
-                <div key={artifact.title} className="flex items-center justify-between rounded-md border px-3 py-2">
-                  <span className="text-sm">{artifact.title}</span>
-                  <Badge variant={artifact.visible ? "default" : "outline"}>{artifact.visible ? "ready" : "pending"}</Badge>
-                </div>
-              ))}
-            </div>
-          </section>
-        </aside>
       </main>
     </OrchestratorFrame>
   );
