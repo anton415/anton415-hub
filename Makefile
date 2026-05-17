@@ -6,8 +6,9 @@ GOFMT ?= $(if $(shell command -v gofmt 2>/dev/null),gofmt,$(GO_DOCKER) gofmt)
 GO_FILES := $(shell find . -name "*.go" -not -path "./.git/*" -not -path "./apps/web/node_modules/*")
 MIGRATE_DATABASE_URL ?= postgres://anton415:anton415@postgres:5432/anton415_hub?sslmode=disable
 WEB_DIR := apps/web
+ORCHESTRATOR_N8N_WORKFLOW ?= deploy/n8n/workflows/orchestrator-ai-feature-delivery-v0.json
 
-.PHONY: dev orchestrator-dev api web db n8n stop test test-e2e test-integration lint build docker-build migrate-up migrate-down docker-config go-mod-tidy
+.PHONY: dev orchestrator-dev api web db n8n n8n-import-orchestrator stop test test-e2e test-integration lint build docker-build migrate-up migrate-down docker-config go-mod-tidy
 
 dev:
 	$(COMPOSE) up postgres api web
@@ -26,6 +27,12 @@ db:
 
 n8n:
 	$(COMPOSE) up n8n-postgres n8n
+
+n8n-import-orchestrator:
+	$(COMPOSE) up -d --wait n8n-postgres
+	$(COMPOSE) run --rm -T --no-deps \
+		-v "$(CURDIR)/$(ORCHESTRATOR_N8N_WORKFLOW):/tmp/orchestrator-ai-feature-delivery-v0.json:ro" \
+		n8n import:workflow --input=/tmp/orchestrator-ai-feature-delivery-v0.json
 
 stop:
 	$(COMPOSE) down

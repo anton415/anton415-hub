@@ -74,7 +74,22 @@ n8n calls Hub callbacks under `/api/v1/orchestrator/n8n/*` with:
 Authorization: Bearer <ORCHESTRATOR_N8N_CALLBACK_TOKEN>
 ```
 
-The first n8n workflow is named `orchestrator-ai-feature-delivery-v0` and follows:
+The first n8n workflow is versioned in `deploy/n8n/workflows/orchestrator-ai-feature-delivery-v0.json`.
+
+Import it with:
+
+```bash
+make n8n-import-orchestrator
+```
+
+n8n imports workflows as inactive by default. After import, start the n8n UI with `make n8n`, open n8n, review the workflow named `orchestrator-ai-feature-delivery-v0`, and activate it.
+
+The workflow uses two production webhook paths:
+
+- `/webhook/orchestrator-feature-intake`
+- `/webhook/orchestrator-approval`
+
+It follows:
 
 ```text
 Webhook Trigger
@@ -91,3 +106,5 @@ Webhook Trigger
   -> create/update GitHub issue
   -> call Hub ready_for_implementation callback
 ```
+
+Hub is the durable state machine: approvals start a new n8n webhook execution with workflow context and artifact previews from Hub, rather than keeping one long paused n8n execution open.

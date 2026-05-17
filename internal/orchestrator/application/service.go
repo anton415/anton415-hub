@@ -152,11 +152,23 @@ type FeaturePayload struct {
 }
 
 type ApprovalPayload struct {
-	WorkflowID string                  `json:"workflow_id"`
-	StepKey    domain.StepKey          `json:"step_key"`
-	Decision   domain.ApprovalDecision `json:"decision"`
-	Comment    *string                 `json:"comment,omitempty"`
-	DecidedBy  string                  `json:"decided_by"`
+	WorkflowID string                   `json:"workflow_id"`
+	StepKey    domain.StepKey           `json:"step_key"`
+	Decision   domain.ApprovalDecision  `json:"decision"`
+	Comment    *string                  `json:"comment,omitempty"`
+	DecidedBy  string                   `json:"decided_by"`
+	Project    FeatureProjectPayload    `json:"project"`
+	Feature    FeaturePayload           `json:"feature"`
+	Artifacts  []ArtifactWebhookPayload `json:"artifacts"`
+}
+
+type ArtifactWebhookPayload struct {
+	Type           domain.ArtifactType `json:"type"`
+	Title          string              `json:"title"`
+	GitHubURL      *string             `json:"github_url,omitempty"`
+	LocalPreview   *string             `json:"local_preview,omitempty"`
+	CreatedByAgent *domain.Agent       `json:"created_by_agent,omitempty"`
+	CreatedAt      time.Time           `json:"created_at"`
 }
 
 func (service *Service) ListProjects(ctx context.Context) ([]domain.Project, error) {
@@ -325,7 +337,8 @@ func (service *Service) UpdateStatus(ctx context.Context, input UpdateStatusInpu
 
 func (service *Service) approvalAction(ctx context.Context, workflowID string, stepKey domain.StepKey, decision domain.ApprovalDecision, status domain.WorkflowStatus, stepStatus domain.StepStatus, input ApprovalInput, notifyN8N bool) (WorkflowDetail, error) {
 	now := service.now().UTC()
-	if _, err := service.repository.GetWorkflow(ctx, workflowID); err != nil {
+	detail, err := service.repository.GetWorkflow(ctx, workflowID)
+	if err != nil {
 		return WorkflowDetail{}, err
 	}
 
@@ -363,6 +376,9 @@ func (service *Service) approvalAction(ctx context.Context, workflowID string, s
 			Decision:   decision,
 			Comment:    approval.Comment,
 			DecidedBy:  approval.DecidedBy,
+			Project:    projectPayload(detail.Project),
+			Feature:    featurePayload(detail.Workflow),
+			Artifacts:  artifactPayloads(detail.Artifacts),
 		}
 		if err := service.n8n.NotifyApproval(ctx, payload); err != nil {
 			return service.markWorkflowFailed(ctx, workflowID, stepKey, "n8n_approval_failed", fmt.Sprintf("n8n approval webhook failed: %s", err.Error()))
@@ -401,19 +417,42 @@ func (service *Service) applyEventProgress(ctx context.Context, workflowID strin
 func intakePayload(detail WorkflowDetail) FeatureIntakePayload {
 	return FeatureIntakePayload{
 		WorkflowID: detail.Workflow.ID,
-		Project: FeatureProjectPayload{
-			ID:            detail.Project.ID,
-			Name:          detail.Project.Name,
-			GitHubOwner:   detail.Project.GitHubOwner,
-			GitHubRepo:    detail.Project.GitHubRepo,
-			DefaultBranch: detail.Project.DefaultBranch,
-			ConfigPath:    detail.Project.ConfigPath,
-		},
-		Feature: FeaturePayload{
-			ID:      detail.Workflow.FeatureID,
-			Title:   detail.Workflow.Title,
-			Module:  detail.Workflow.Module,
-			Problem: detail.Workflow.Problem,
-		},
+		Project:    projectPayload(detail.Project),
+		Feature:    featurePayload(detail.Workflow),
 	}
+}
+
+func projectPayload(project domain.Project) FeatureProjectPayload {
+	return FeatureProjectPayload{
+		ID:            project.ID,
+		Name:          project.Name,
+		GitHubOwner:   project.GitHubOwner,
+		GitHubRepo:    project.GitHubRepo,
+		DefaultBranch: project.DefaultBranch,
+		ConfigPath:    project.ConfigPath,
+	}
+}
+
+func featurePayload(workflow domain.Workflow) FeaturePayload {
+	return FeaturePayload{
+		ID:      workflow.FeatureID,
+		Title:   workflow.Title,
+		Module:  workflow.Module,
+		Problem: workflow.Problem,
+	}
+}
+
+func artifactPayloads(artifacts []domain.Artifact) []ArtifactWebhookPayload {
+	payloads := make([]ArtifactWebhookPayload, 0, len(artifacts))
+	for _, artifact := range artifacts {
+		payloads = append(payloads, ArtifactWebhookPayload{
+			Type:           artifact.ArtifactType,
+			Title:          artifact.Title,
+			GitHubURL:      artifact.GitHubURL,
+			LocalPreview:   artifact.LocalPreview,
+			CreatedByAgent: artifact.CreatedByAgent,
+			CreatedAt:      artifact.CreatedAt,
+		})
+	}
+	return payloads
 }
