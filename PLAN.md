@@ -50,7 +50,7 @@
   - Источник: Accessibility 4
   - Acceptance: каждая иконочная кнопка имеет текстовое описание
 
-- [ ] 🟡 **P1.2.4** Исправить `text-[10px]` → `text-xs` в CalendarPage Year view
+- [x] ✅ 🟡 **P1.2.4** Исправить `text-[10px]` → `text-xs` в CalendarPage Year view
   - Файл: `CalendarPage.tsx:253, 271`
   - Источник: Accessibility 5, UI 6.6
   - Acceptance: минимальный размер текста 12px

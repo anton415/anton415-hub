@@ -220,7 +220,7 @@ export function CalendarPage() {
               </div>
               <div className="grid grid-cols-7 gap-0.5">
                 {dayNamesRu.map((day, i) => (
-                  <div key={i} className="text-center text-[10px] text-muted-foreground">
+                  <div key={i} className="text-center text-xs text-muted-foreground">
                     {day[0]}
                   </div>
                 ))}
@@ -233,7 +233,7 @@ export function CalendarPage() {
                         setCurrentDate(day);
                         setViewMode('day');
                       }}
-                      className={`aspect-square text-[10px] rounded flex items-center justify-center relative
+                      className={`aspect-square text-xs rounded flex items-center justify-center relative
                         ${!isSameMonth(day, month) ? 'text-muted-foreground/40' : ''}
                         ${isToday(day) ? 'bg-primary text-primary-foreground font-medium' : 'hover:bg-accent'}
                       `}
