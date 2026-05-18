@@ -79,7 +79,7 @@
 
 ### P1.4 Стабильность и базовая защита
 
-- [ ] 🟠 **P1.4.1** Добавить `<ErrorBoundary>` на уровне App с fallback'ом
+- [x] ✅ 🟠 **P1.4.1** Добавить `<ErrorBoundary>` на уровне App с fallback'ом
   - Файлы: `apps/web/src/app/App.tsx`, новый `apps/web/src/app/ErrorBoundary.tsx`
   - Источник: Critical Issue 6, Stability 11
   - Acceptance: runtime-ошибка в одной странице не вешает SPA, показан fallback с «Перезагрузить»
