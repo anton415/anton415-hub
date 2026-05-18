@@ -97,7 +97,7 @@
 
 ### P1.5 Чистка мёртвого кода
 
-- [ ] 🟡 **P1.5.1** Удалить мёртвые типы из `api/types.ts` (после grep-проверки)
+- [x] ✅ 🟡 **P1.5.1** Удалить мёртвые типы из `api/types.ts` (после grep-проверки)
   - Файл: `apps/web/src/app/api/types.ts`
   - Типы-кандидаты: `TodoState`, `FinanceState`, `HomeState`, `AppPath`, `AuthState`, `HealthState`, `HealthPayload`, `ProductModule`
   - Источник: State Management Review, Task T7

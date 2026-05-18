@@ -1,15 +1,3 @@
-export type HealthPayload = {
-  service: string;
-  status: "ok" | "degraded" | string;
-  version: string;
-  checks: Record<string, { status: string; latency?: string; error?: string }>;
-};
-
-export type HealthState =
-  | { kind: "loading" }
-  | { kind: "online"; payload: HealthPayload }
-  | { kind: "offline"; message: string };
-
 export type AuthProvider = {
   id: string;
   name: string;
@@ -20,20 +8,6 @@ export type AuthUser = {
   email: string;
   provider: string;
 };
-
-export type AuthState =
-  | { kind: "loading"; providers: AuthProvider[] }
-  | { kind: "unauthenticated"; providers: AuthProvider[]; message?: string; emailSent?: boolean }
-  | { kind: "authenticated"; providers: AuthProvider[]; user: AuthUser };
-
-export type ProductModule = {
-  name: string;
-  path: string;
-  summary: string;
-  state?: string;
-};
-
-export type AppPath = "/" | "/todo" | "/finance/expenses" | "/finance/income" | "/finance/settings";
 
 export const financeExpenseCategoryCodes = [
   "restaurants",
@@ -102,17 +76,6 @@ export type FinanceSettings = {
   expense_limit_percents: Partial<FinanceExpenseCategoryPercents>;
 };
 
-export type FinanceState = {
-  loading: boolean;
-  saving: boolean;
-  year: number;
-  settings: FinanceSettings;
-  expenses?: FinanceExpensesYear;
-  income?: FinanceIncomeYear;
-  error?: string;
-  formError?: string;
-};
-
 export type TodoTaskStatus = "todo" | "in_progress" | "done";
 export type TodoView = "inbox" | "today" | "overdue" | "upcoming" | "scheduled" | "flagged" | "all" | "completed";
 export type TodoServerView = Exclude<TodoView, "all" | "completed">;
@@ -155,38 +118,6 @@ export type TodoTask = {
 export type TodoScope =
   | { kind: "view"; view: TodoView }
   | { kind: "project"; projectId: number };
-
-export type TodoState = {
-  loading: boolean;
-  saving: boolean;
-  error?: string;
-  projects: TodoProject[];
-  tasks: TodoTask[];
-  scope: TodoScope;
-  editingTaskId?: number;
-  editingProjectId?: number;
-  todoPanelCollapsed?: boolean;
-  searchPanelCollapsed?: boolean;
-  showArchivedProjects?: boolean;
-  sort: TodoSort;
-  direction: TodoSortDirection;
-  search: string;
-  taskFormError?: string;
-  projectFormError?: string;
-};
-
-export type HomeState = {
-  loading: boolean;
-  year: number;
-  settings: FinanceSettings;
-  projects: TodoProject[];
-  todayTasks: TodoTask[];
-  overdueTasks: TodoTask[];
-  flaggedTasks: TodoTask[];
-  expenses?: FinanceExpensesYear;
-  income?: FinanceIncomeYear;
-  error?: string;
-};
 
 export type TodoTaskPayload = {
   project_id: number | null;
