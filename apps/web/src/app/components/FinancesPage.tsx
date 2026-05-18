@@ -6,7 +6,7 @@ import {
   TrendingUp,
   Target,
   Calendar as CalendarIcon,
-  X,
+  LogOut,
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
@@ -291,7 +291,7 @@ export function FinancesPage() {
               onClick={() => logoutAndRedirect(navigate)}
             >
               <span className="hidden sm:inline">Выход</span>
-              <X className="size-4 sm:hidden" />
+              <LogOut className="size-4 sm:hidden" aria-hidden="true" />
             </Button>
           </div>
         </div>

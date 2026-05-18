@@ -18,7 +18,7 @@ import {
   TrendingUp,
   Target,
   Menu,
-  X
+  LogOut
 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { Checkbox } from "./ui/checkbox";
@@ -640,7 +640,7 @@ export function TasksPage() {
               aria-label="Выход"
             >
               <span className="hidden sm:inline">Выход</span>
-              <X className="size-4 sm:hidden" aria-hidden="true" />
+              <LogOut className="size-4 sm:hidden" aria-hidden="true" />
             </Button>
           </div>
         </div>

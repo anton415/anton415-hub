@@ -72,7 +72,7 @@
   - Источник: UI 6.4
   - Acceptance: одна цветовая система для ошибок
 
-- [ ] 🟢 **P1.3.3** Заменить иконку `<X />` на `<LogOut />` для logout на mobile
+- [x] ✅ 🟢 **P1.3.3** Заменить иконку `<X />` на `<LogOut />` для logout на mobile
   - Файлы: `TasksPage.tsx:621`, `FinancesPage.tsx:293`, `CalendarPage.tsx:543`
   - Источник: UX 5.2, UI 6.5
   - Acceptance: иконка семантически правильная
