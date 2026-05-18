@@ -33,7 +33,14 @@ import {
   SheetFooter,
   SheetDescription
 } from "./ui/sheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
+} from "./ui/dialog";
 import { Badge } from "./ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
@@ -173,6 +180,7 @@ export function TasksPage() {
   const [newProjectName, setNewProjectName] = useState("");
 
   const [editingProject, setEditingProject] = useState<TodoProject | null>(null);
+  const [isConfirmingDeleteProject, setIsConfirmingDeleteProject] = useState(false);
   const [editProjectDraft, setEditProjectDraft] = useState<TodoProjectPayload | null>(null);
 
   const loadProjects = useCallback(async () => {
@@ -374,6 +382,8 @@ export function TasksPage() {
       setEditProjectDraft(null);
     } catch (err) {
       setError(describeError(err));
+    } finally {
+      setIsConfirmingDeleteProject(false);
     }
   };
 
@@ -1005,7 +1015,11 @@ export function TasksPage() {
             </div>
           )}
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="destructive" onClick={() => void handleDeleteProject()} className="sm:mr-auto">
+            <Button
+              variant="destructive"
+              onClick={() => setIsConfirmingDeleteProject(true)}
+              className="sm:mr-auto"
+            >
               Удалить проект
             </Button>
             <div className="flex gap-2 w-full sm:w-auto">
@@ -1023,6 +1037,38 @@ export function TasksPage() {
                 Сохранить
               </Button>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isConfirmingDeleteProject}
+        onOpenChange={(open) => {
+          if (!open) setIsConfirmingDeleteProject(false);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Удалить проект?</DialogTitle>
+            <DialogDescription>
+              Задачи также будут удалены. Это действие нельзя отменить.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsConfirmingDeleteProject(false)}
+              className="flex-1 sm:flex-none"
+            >
+              Отмена
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void handleDeleteProject()}
+              className="flex-1 sm:flex-none"
+            >
+              Удалить
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
