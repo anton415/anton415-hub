@@ -3,7 +3,7 @@ import { LoginPage } from "./components/LoginPage";
 import { Dashboard } from "./components/Dashboard";
 import { TasksPage } from "./components/TasksPage";
 import { FinancesPage } from "./components/FinancesPage";
-import { CalendarPage } from "./components/CalendarPage";
+import { CalendarComingSoon } from "./components/CalendarComingSoon";
 import {
   OrchestratorHomePage,
   OrchestratorProjectsPage,
@@ -47,7 +47,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/calendar",
-        Component: CalendarPage,
+        Component: CalendarComingSoon,
       },
       {
         path: "/orchestrator",

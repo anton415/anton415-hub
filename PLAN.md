@@ -28,7 +28,7 @@
   - Источник: Stability Finding 9
   - Acceptance: id уникальны, нет коллизий при быстрых кликах
 
-- [ ] 🟢 **P1.1.3** Решить судьбу календаря: либо `coming-soon` в Dashboard, либо стаб `calendarApi`
+- [x] ✅ 🟢 **P1.1.3** Решить судьбу календаря: либо `coming-soon` в Dashboard, либо стаб `calendarApi`
   - Файлы: `Dashboard.tsx:50`, новый `apps/web/src/app/api/calendarApi.ts` или удаление роута
   - Источник: Critical Issue 1
   - Acceptance: пользователь не видит «фантомных» сохранений или модуль явно помечен «скоро»
