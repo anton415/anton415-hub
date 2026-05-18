@@ -55,7 +55,7 @@
   - Источник: Accessibility 5, UI 6.6
   - Acceptance: минимальный размер текста 12px
 
-- [ ] 🟡 **P1.2.5** Связать `<Label>` с `<Input>` через `htmlFor` в финансах
+- [x] ✅ 🟡 **P1.2.5** Связать `<Label>` с `<Input>` через `htmlFor` в финансах
   - Файл: `FinancesPage.tsx` (все Input в таблицах)
   - Источник: Accessibility 3
   - Acceptance: клик на label фокусирует input

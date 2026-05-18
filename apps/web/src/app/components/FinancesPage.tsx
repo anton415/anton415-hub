@@ -15,6 +15,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import { financeApi, FinanceApiError } from "../api";
 import {
   financeExpenseCategoryCodes,
@@ -371,9 +372,11 @@ export function FinancesPage() {
                                 {activeCategoryCodes.map((code) => (
                                   <td key={code} className="py-1 px-1">
                                     <Input
+                                      id={`expense-${month}-${code}`}
                                       type="number"
                                       value={row[code] ?? ""}
                                       onChange={(e) => handleExpenseChange(month, code, e.target.value)}
+                                      aria-label={`${monthLabel}, ${categoryShort[code]}`}
                                       className="h-9 text-center text-xs sm:text-sm border-0 focus:border focus:border-primary px-1"
                                     />
                                   </td>
@@ -433,21 +436,25 @@ export function FinancesPage() {
                                 <td className="py-1 px-2 sm:px-4 font-medium text-left">{monthLabel}</td>
                                 <td className="py-1 px-2 sm:px-4">
                                   <Input
+                                    id={`income-salary-${month}`}
                                     type="number"
                                     value={row.salary_amount}
                                     onChange={(e) =>
                                       handleIncomeChange(month, "salary_amount", e.target.value)
                                     }
+                                    aria-label={`${monthLabel}, оклад`}
                                     className="h-9 text-center text-sm border-0 focus:border focus:border-primary"
                                   />
                                 </td>
                                 <td className="py-1 px-2 sm:px-4">
                                   <Input
+                                    id={`income-bonus-${month}`}
                                     type="number"
                                     value={row.bonus_percent}
                                     onChange={(e) =>
                                       handleIncomeChange(month, "bonus_percent", e.target.value)
                                     }
+                                    aria-label={`${monthLabel}, процент премии`}
                                     className="h-9 text-center text-sm border-0 focus:border focus:border-primary"
                                   />
                                 </td>
@@ -501,9 +508,12 @@ export function FinancesPage() {
                         </thead>
                         <tbody>
                           <tr className="bg-success-light border-b">
-                            <td className="py-1 px-2 sm:px-4 font-medium text-left">Оклад</td>
+                            <td className="py-1 px-2 sm:px-4 font-medium text-left">
+                              <Label htmlFor="settings-salary">Оклад</Label>
+                            </td>
                             <td className="py-1 px-2 sm:px-4">
                               <Input
+                                id="settings-salary"
                                 type="number"
                                 value={salaryDraft}
                                 onChange={(e) => setSalaryDraft(e.target.value)}
@@ -512,9 +522,12 @@ export function FinancesPage() {
                             </td>
                           </tr>
                           <tr className="bg-success-light border-b">
-                            <td className="py-1 px-2 sm:px-4 font-medium text-left">% премии</td>
+                            <td className="py-1 px-2 sm:px-4 font-medium text-left">
+                              <Label htmlFor="settings-bonus">% премии</Label>
+                            </td>
                             <td className="py-1 px-2 sm:px-4">
                               <Input
+                                id="settings-bonus"
                                 type="number"
                                 value={bonusDraft}
                                 onChange={(e) => setBonusDraft(e.target.value)}
@@ -530,9 +543,12 @@ export function FinancesPage() {
                           </tr>
                           {financeExpenseCategoryCodes.map((code) => (
                             <tr key={code} className="border-b">
-                              <td className="py-1 px-2 sm:px-4 text-left">{categoryShort[code]}</td>
+                              <td className="py-1 px-2 sm:px-4 text-left">
+                                <Label htmlFor={`settings-limit-${code}`}>{categoryShort[code]}</Label>
+                              </td>
                               <td className="py-1 px-2 sm:px-4">
                                 <Input
+                                  id={`settings-limit-${code}`}
                                   type="number"
                                   value={limitDraft[code] ?? ""}
                                   onChange={(e) =>
