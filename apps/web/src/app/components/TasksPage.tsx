@@ -61,7 +61,7 @@ type TaskNode = TodoTask & { children: TaskNode[] };
 const allViews: { id: TodoView; name: string; icon: typeof Inbox; color: string }[] = [
   { id: "inbox", name: "Входящие", icon: Inbox, color: "text-chart-1" },
   { id: "today", name: "Сегодня", icon: CalendarIcon, color: "text-success" },
-  { id: "overdue", name: "Просроченные", icon: AlertCircle, color: "text-danger" },
+  { id: "overdue", name: "Просроченные", icon: AlertCircle, color: "text-destructive" },
   { id: "upcoming", name: "Скоро", icon: Clock, color: "text-warning" },
   { id: "scheduled", name: "Запланированные", icon: CalendarCheck, color: "text-chart-3" },
   { id: "flagged", name: "С флажком", icon: Flag, color: "text-chart-4" },
@@ -672,7 +672,7 @@ export function TasksPage() {
                 <Plus className="size-4" />
               </Button>
             </div>
-            {error && <p className="text-sm text-danger mt-2">{error}</p>}
+            {error && <p className="text-sm text-destructive mt-2">{error}</p>}
           </div>
 
           <div className="flex-1 overflow-y-auto p-3 md:p-4">
