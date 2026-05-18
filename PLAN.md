@@ -67,7 +67,7 @@
   - Источник: UI 6.4, AI-readiness 14.2
   - Acceptance: в проекте только `text-destructive` / `variant="destructive"`, никаких `text-danger`
 
-- [ ] 🟢 **P1.3.2** Удалить дубли `--danger`/`--success`/`--warning` из `theme.css` (или оставить только для не-кнопочного использования)
+- [x] ✅ 🟢 **P1.3.2** Удалить дубли `--danger`/`--success`/`--warning` из `theme.css` (или оставить только для не-кнопочного использования)
   - Файл: `apps/web/src/styles/theme.css:33-38, 77-82`
   - Источник: UI 6.4
   - Acceptance: одна цветовая система для ошибок
