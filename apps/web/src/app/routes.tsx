@@ -4,11 +4,9 @@ import { Dashboard } from "./components/Dashboard";
 import { TasksPage } from "./components/TasksPage";
 import { FinancesPage } from "./components/FinancesPage";
 import { CalendarComingSoon } from "./components/CalendarComingSoon";
-import {
-  OrchestratorHomePage,
-  OrchestratorProjectsPage,
-  OrchestratorWorkflowPage
-} from "./components/orchestrator/OrchestratorPages";
+import { OrchestratorHomePage } from "./components/orchestrator/OrchestratorHomePage";
+import { OrchestratorProjectsPage } from "./components/orchestrator/OrchestratorProjectsPage";
+import { OrchestratorWorkflowPage } from "./components/orchestrator/OrchestratorWorkflowPage";
 import { RouteErrorBoundary } from "./ErrorBoundary";
 
 export const router = createBrowserRouter([

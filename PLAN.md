@@ -103,7 +103,7 @@
   - Источник: State Management Review, Task T7
   - Acceptance: `grep -r "TodoState" apps/web/src` пусто; `npm run build` зелёный
 
-- [ ] 🟢 **P1.5.2** Удалить barrel-файл `OrchestratorPages.tsx`, импортировать страницы напрямую
+- [x] ✅ 🟢 **P1.5.2** Удалить barrel-файл `OrchestratorPages.tsx`, импортировать страницы напрямую
   - Файлы: `apps/web/src/app/components/orchestrator/OrchestratorPages.tsx`, `routes.tsx`
   - Источник: Phase 3 plan, AI-readiness
   - Acceptance: barrel удалён, роутер импортирует страницы напрямую
