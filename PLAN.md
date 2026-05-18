@@ -62,7 +62,7 @@
 
 ### P1.3 Чистка дизайн-токенов
 
-- [ ] 🟠 **P1.3.1** Унифицировать `text-danger` → `text-destructive` во всех страницах
+- [x] ✅ 🟠 **P1.3.1** Унифицировать `text-danger` → `text-destructive` во всех страницах
   - Файлы: `TasksPage.tsx:658`, `FinancesPage.tsx:325`, `LoginPage.tsx:113`
   - Источник: UI 6.4, AI-readiness 14.2
   - Acceptance: в проекте только `text-destructive` / `variant="destructive"`, никаких `text-danger`

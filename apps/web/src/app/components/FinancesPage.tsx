@@ -322,7 +322,7 @@ export function FinancesPage() {
               </div>
             </div>
 
-            {error && <p className="text-sm text-danger mb-2">{error}</p>}
+            {error && <p className="text-sm text-destructive mb-2">{error}</p>}
             {info && <p className="text-sm text-success mb-2">{info}</p>}
             {loading && <p className="text-sm text-muted-foreground mb-2">Загрузка…</p>}
 

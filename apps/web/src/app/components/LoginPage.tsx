@@ -110,7 +110,7 @@ export function LoginPage() {
                   </p>
                 )}
 
-                {error && <p className="text-sm text-danger">{error}</p>}
+                {error && <p className="text-sm text-destructive">{error}</p>}
 
                 <Button type="submit" className="w-full" disabled={submitting || loading}>
                   {submitting ? "Отправляем..." : "Отправить ссылку"}
