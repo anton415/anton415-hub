@@ -84,7 +84,7 @@
   - Источник: Critical Issue 6, Stability 11
   - Acceptance: runtime-ошибка в одной странице не вешает SPA, показан fallback с «Перезагрузить»
 
-- [ ] 🟡 **P1.4.2** Добавить confirmation при удалении проекта
+- [x] ✅ 🟡 **P1.4.2** Добавить confirmation при удалении проекта
   - Файл: `TasksPage.tsx:365-378` (handleDeleteProject)
   - Источник: Stability 4, UX 5.2
   - Acceptance: перед удалением показывается диалог «Удалить проект? Задачи также будут удалены»
