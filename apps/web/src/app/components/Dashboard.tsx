@@ -51,7 +51,7 @@ export function Dashboard() {
       title: "Календарь",
       description: "Планирование и события",
       icon: Calendar,
-      status: "active",
+      status: "coming-soon",
       color: "bg-chart-5",
       path: "/calendar"
     },

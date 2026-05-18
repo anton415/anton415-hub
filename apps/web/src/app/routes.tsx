@@ -3,7 +3,6 @@ import { LoginPage } from "./components/LoginPage";
 import { Dashboard } from "./components/Dashboard";
 import { TasksPage } from "./components/TasksPage";
 import { FinancesPage } from "./components/FinancesPage";
-import { CalendarPage } from "./components/CalendarPage";
 import {
   OrchestratorHomePage,
   OrchestratorProjectsPage,
@@ -47,7 +46,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/calendar",
-        Component: CalendarPage,
+        element: <div className="p-8">Календарь (в разработке)</div>,
       },
       {
         path: "/orchestrator",
