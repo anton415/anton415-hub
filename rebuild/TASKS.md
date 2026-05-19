@@ -27,7 +27,7 @@ Plan ref: [§3](todo_hub_ai_first_rebuild_plan.md#3-phase-0-preparation)
       PR title: `docs: add Phase 0 repository map (rebuild)`
       Acceptance: a fresh agent can read `repo-map.md` and locate the current Todo implementation without further exploration.
       Quality gates: N/A.
-      PR: _pending — branch `claude/0.2-repo-map`_
+      PR: https://github.com/anton415/anton415-hub/pull/92  •  open
 
 ---
 
