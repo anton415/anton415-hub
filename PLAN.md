@@ -145,7 +145,7 @@
 
 ### P2.3 Разрезание монолитов
 
-- [ ] 🔴 **P2.3.1** Разрезать `TasksPage` (1013 строк) на 7 компонентов + 2 хука
+- [x] ✅ 🔴 **P2.3.1** Разрезать `TasksPage` (1013 строк) на 7 компонентов + 2 хука
   - Папка: новая `apps/web/src/modules/tasks/`
   - Структура: `TasksPage` / `TaskSidebar` / `TaskList` / `TaskListItem` / `TaskEditSheet` / `ProjectDialog` / `hooks/useTasks` / `hooks/useProjects` / `lib/buildTree`
   - Источник: Critical Issue 3, Task T4

@@ -1,7 +1,7 @@
 import { createBrowserRouter, Outlet } from "react-router";
 import { LoginPage } from "./components/LoginPage";
 import { Dashboard } from "./components/Dashboard";
-import { TasksPage } from "./components/TasksPage";
+import { TasksPage } from "../modules/tasks/TasksPage";
 import { FinancesPage } from "./components/FinancesPage";
 import { CalendarComingSoon } from "./components/CalendarComingSoon";
 import { OrchestratorHomePage } from "./components/orchestrator/OrchestratorHomePage";
