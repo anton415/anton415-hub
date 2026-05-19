@@ -4,9 +4,8 @@
 > Cold-start workflow lives in [`rebuild/AGENT.md`](AGENT.md).
 
 **Legend**
-- `- [ ]` not started
-- `- [~]` PR open, not yet merged
-- `- [x]` merged
+- `- [ ]` not done
+- `- [x]` done (PR opened — solo developer, so we tick the box when the PR for the task lands on the branch, not at merge)
 
 ---
 
@@ -14,20 +13,20 @@
 
 Plan ref: [§3](todo_hub_ai_first_rebuild_plan.md#3-phase-0-preparation)
 
-- [~] **0.1** Commit rebuild source-of-truth files to the repository
+- [x] **0.1** Commit rebuild source-of-truth files to the repository
       Output: `rebuild/AGENT.md`, `rebuild/TASKS.md`, `rebuild/todo_hub_ai_first_rebuild_spec.md`, `rebuild/todo_hub_ai_first_rebuild_plan.md`
       PR title: `docs: add Todo-only AI-first rebuild source documents`
       Acceptance: `rebuild/` is checked in on `main`; `AGENT.md` is the documented entry point.
       Quality gates: N/A (docs-only).
-      PR: https://github.com/anton415/anton415-hub/pull/91  •  open
+      PR: https://github.com/anton415/anton415-hub/pull/91
 
-- [~] **0.2** Create `docs/audit/repo-map.md`
+- [x] **0.2** Create `docs/audit/repo-map.md`
       Output: `docs/audit/repo-map.md`
       Inspect (do not modify): directory tree at depth 3, scripts (`Makefile`, `package.json`, Go entry points in `cmd/` or `apps/api/`), Todo-related files, non-Todo module files, current docs inventory (every file under `docs/` and root `*.md`), initial risk notes.
       PR title: `docs: add Phase 0 repository map (rebuild)`
       Acceptance: a fresh agent can read `repo-map.md` and locate the current Todo implementation without further exploration.
       Quality gates: N/A.
-      PR: https://github.com/anton415/anton415-hub/pull/92  •  open
+      PR: https://github.com/anton415/anton415-hub/pull/92
 
 ---
 
@@ -237,11 +236,4 @@ Plan ref: [§13](todo_hub_ai_first_rebuild_plan.md#13-phase-10-retrospective-and
 
 ---
 
-## Completed (newest at top)
-
-_None yet. Append entries here after each merge, format:_
-
-```text
-- [x] **0.1** Commit rebuild source-of-truth files
-      PR: https://github.com/anton415/anton415-hub/pull/NN  •  merged YYYY-MM-DD
-```
+Completed tasks stay in place above with `[x]` and a `PR:` sub-line. Merge history lives in `git log` and the linked PRs; this file does not duplicate it.
