@@ -38,7 +38,7 @@ Plan ref: [§4](todo_hub_ai_first_rebuild_plan.md#4-phase-1-scope-freeze)
       Content per spec §6.1: project goal, current priority (Todo only), frozen modules list, architecture rules, coding rules, testing rules, documentation rules, forbidden actions, quality gates.
       PR title: `docs: add AI.md working rules for AI agents`
       Acceptance: a fresh agent reading only `AI.md` understands Todo-only scope and forbidden actions.
-      PR: _pending — will be filled after `gh pr create`_
+      PR: https://github.com/anton415/anton415-hub/pull/93
 
 - [ ] **1.2** Create ADR `docs/adr/0001-focus-on-todo-only.md`
       Content: Status (Accepted), Context, Decision (Todo only; Finance/Calendar/Orchestrator/Investments/FIRE frozen and to be removed in Phase 7), Consequences, Alternatives.
