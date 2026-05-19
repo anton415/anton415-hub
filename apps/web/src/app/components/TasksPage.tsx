@@ -44,7 +44,7 @@ import {
 import { Badge } from "./ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-import { todoApi, TodoApiError } from "../api";
+import { todoApi, ApiError } from "../api";
 import type {
   TodoProject,
   TodoProjectPayload,
@@ -110,7 +110,7 @@ const repeatLabels: Record<TodoRepeatFrequency, string> = {
 const NO_PROJECT_VALUE = "__none__";
 
 function describeError(error: unknown): string {
-  if (error instanceof TodoApiError) return error.message;
+  if (error instanceof ApiError) return error.message;
   if (error instanceof Error) return error.message;
   return "Не удалось выполнить запрос";
 }

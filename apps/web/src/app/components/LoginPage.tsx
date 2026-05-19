@@ -5,7 +5,7 @@ import { Card, CardContent } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
-import { authApi, AuthApiError } from "../api";
+import { authApi, ApiError } from "../api";
 import type { AuthProvider } from "../api/types";
 
 const providerLabels: Record<string, string> = {
@@ -15,7 +15,7 @@ const providerLabels: Record<string, string> = {
 };
 
 function describeError(error: unknown): string {
-  if (error instanceof AuthApiError) return error.message;
+  if (error instanceof ApiError) return error.message;
   if (error instanceof Error) return error.message;
   return "Не удалось выполнить запрос";
 }

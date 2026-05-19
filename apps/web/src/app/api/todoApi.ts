@@ -1,3 +1,4 @@
+import { apiFetch } from "./client";
 import type {
   TodoProject,
   TodoProjectPayload,
@@ -7,145 +8,90 @@ import type {
   TodoTaskQuery
 } from "./types";
 
-type DataEnvelope<T> = {
-  data: T;
-};
-
-type ErrorEnvelope = {
-  error?: {
-    code?: string;
-    message?: string;
-  };
-};
-
-export class TodoApiError extends Error {
-  code: string;
-
-  constructor(code: string, message: string) {
-    super(message);
-    this.name = "TodoApiError";
-    this.code = code;
+export function listProjects(query: TodoProjectQuery = {}): Promise<TodoProject[]> {
+  const params = new URLSearchParams();
+  if (query.include_archived !== undefined) {
+    params.set("include_archived", String(query.include_archived));
   }
+  if (query.archived !== undefined) {
+    params.set("archived", String(query.archived));
+  }
+
+  const suffix = params.size > 0 ? `?${params.toString()}` : "";
+  return apiFetch<TodoProject[]>(`/api/v1/todo/projects${suffix}`);
 }
 
-export class TodoApi {
-  private readonly baseUrl: string;
+export function createProject(payload: TodoProjectPayload): Promise<TodoProject> {
+  return apiFetch<TodoProject>("/api/v1/todo/projects", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
 
-  constructor(apiBaseUrl: string) {
-    this.baseUrl = apiBaseUrl.replace(/\/$/, "");
+export function updateProject(id: number, payload: TodoProjectPayload): Promise<TodoProject> {
+  return apiFetch<TodoProject>(`/api/v1/todo/projects/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function archiveProject(id: number): Promise<TodoProject> {
+  return apiFetch<TodoProject>(`/api/v1/todo/projects/${id}/archive`, {
+    method: "PATCH",
+    body: JSON.stringify({})
+  });
+}
+
+export function restoreProject(id: number): Promise<TodoProject> {
+  return apiFetch<TodoProject>(`/api/v1/todo/projects/${id}/restore`, {
+    method: "PATCH",
+    body: JSON.stringify({})
+  });
+}
+
+export async function deleteProject(id: number): Promise<void> {
+  await apiFetch<void>(`/api/v1/todo/projects/${id}`, { method: "DELETE" });
+}
+
+export function listTasks(query: TodoTaskQuery): Promise<TodoTask[]> {
+  const params = new URLSearchParams();
+  if (query.view) {
+    params.set("view", query.view);
+  }
+  if (query.status) {
+    params.set("status", query.status);
+  }
+  if (query.project_id) {
+    params.set("project_id", String(query.project_id));
+  }
+  if (query.sort) {
+    params.set("sort", query.sort);
+  }
+  if (query.direction) {
+    params.set("direction", query.direction);
+  }
+  if (query.q) {
+    params.set("q", query.q);
   }
 
-  listProjects(query: TodoProjectQuery = {}): Promise<TodoProject[]> {
-    const params = new URLSearchParams();
-    if (query.include_archived !== undefined) {
-      params.set("include_archived", String(query.include_archived));
-    }
-    if (query.archived !== undefined) {
-      params.set("archived", String(query.archived));
-    }
+  const suffix = params.size > 0 ? `?${params.toString()}` : "";
+  return apiFetch<TodoTask[]>(`/api/v1/todo/tasks${suffix}`);
+}
 
-    const suffix = params.size > 0 ? `?${params.toString()}` : "";
-    return this.request<TodoProject[]>(`/api/v1/todo/projects${suffix}`);
-  }
+export function createTask(payload: TodoTaskPayload): Promise<TodoTask> {
+  return apiFetch<TodoTask>("/api/v1/todo/tasks", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
 
-  createProject(payload: TodoProjectPayload): Promise<TodoProject> {
-    return this.request<TodoProject>("/api/v1/todo/projects", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-  }
+export function updateTask(id: number, payload: Partial<TodoTaskPayload>): Promise<TodoTask> {
+  return apiFetch<TodoTask>(`/api/v1/todo/tasks/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  });
+}
 
-  updateProject(id: number, payload: TodoProjectPayload): Promise<TodoProject> {
-    return this.request<TodoProject>(`/api/v1/todo/projects/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(payload)
-    });
-  }
-
-  archiveProject(id: number): Promise<TodoProject> {
-    return this.request<TodoProject>(`/api/v1/todo/projects/${id}/archive`, {
-      method: "PATCH",
-      body: JSON.stringify({})
-    });
-  }
-
-  restoreProject(id: number): Promise<TodoProject> {
-    return this.request<TodoProject>(`/api/v1/todo/projects/${id}/restore`, {
-      method: "PATCH",
-      body: JSON.stringify({})
-    });
-  }
-
-  async deleteProject(id: number): Promise<void> {
-    await this.request<void>(`/api/v1/todo/projects/${id}`, { method: "DELETE" });
-  }
-
-  listTasks(query: TodoTaskQuery): Promise<TodoTask[]> {
-    const params = new URLSearchParams();
-    if (query.view) {
-      params.set("view", query.view);
-    }
-    if (query.status) {
-      params.set("status", query.status);
-    }
-    if (query.project_id) {
-      params.set("project_id", String(query.project_id));
-    }
-    if (query.sort) {
-      params.set("sort", query.sort);
-    }
-    if (query.direction) {
-      params.set("direction", query.direction);
-    }
-    if (query.q) {
-      params.set("q", query.q);
-    }
-
-    const suffix = params.size > 0 ? `?${params.toString()}` : "";
-    return this.request<TodoTask[]>(`/api/v1/todo/tasks${suffix}`);
-  }
-
-  createTask(payload: TodoTaskPayload): Promise<TodoTask> {
-    return this.request<TodoTask>("/api/v1/todo/tasks", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-  }
-
-  updateTask(id: number, payload: Partial<TodoTaskPayload>): Promise<TodoTask> {
-    return this.request<TodoTask>(`/api/v1/todo/tasks/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(payload)
-    });
-  }
-
-  async deleteTask(id: number): Promise<void> {
-    await this.request<void>(`/api/v1/todo/tasks/${id}`, { method: "DELETE" });
-  }
-
-  private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      ...init,
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        ...init.headers
-      }
-    });
-
-    if (response.status === 204) {
-      return undefined as T;
-    }
-
-    const payload = (await response.json()) as DataEnvelope<T> & ErrorEnvelope;
-    if (!response.ok) {
-      throw new TodoApiError(
-        payload.error?.code ?? "request_failed",
-        payload.error?.message ?? `Запрос завершился с ошибкой ${response.status}`
-      );
-    }
-
-    return payload.data;
-  }
+export async function deleteTask(id: number): Promise<void> {
+  await apiFetch<void>(`/api/v1/todo/tasks/${id}`, { method: "DELETE" });
 }

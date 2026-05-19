@@ -153,7 +153,7 @@ export function OrchestratorWorkflowPage() {
                   <Button
                     variant="outline"
                     disabled={Boolean(savingAction)}
-                    onClick={() => runAction("approve-spec", orchestratorApi.approveSpec.bind(orchestratorApi))}
+                    onClick={() => runAction("approve-spec", orchestratorApi.approveSpec)}
                   >
                     <ShieldCheck className="size-4" />
                     Approve Spec
@@ -161,7 +161,7 @@ export function OrchestratorWorkflowPage() {
                   <Button
                     variant="outline"
                     disabled={Boolean(savingAction)}
-                    onClick={() => runAction("request-spec", orchestratorApi.requestSpecChanges.bind(orchestratorApi))}
+                    onClick={() => runAction("request-spec", orchestratorApi.requestSpecChanges)}
                   >
                     <ListChecks className="size-4" />
                     Request Spec Changes
@@ -169,7 +169,7 @@ export function OrchestratorWorkflowPage() {
                   <Button
                     variant="outline"
                     disabled={Boolean(savingAction)}
-                    onClick={() => runAction("approve-architecture", orchestratorApi.approveArchitecture.bind(orchestratorApi))}
+                    onClick={() => runAction("approve-architecture", orchestratorApi.approveArchitecture)}
                   >
                     <Check className="size-4" />
                     Approve Architecture
@@ -177,7 +177,7 @@ export function OrchestratorWorkflowPage() {
                   <Button
                     variant="outline"
                     disabled={Boolean(savingAction)}
-                    onClick={() => runAction("request-architecture", orchestratorApi.requestArchitectureChanges.bind(orchestratorApi))}
+                    onClick={() => runAction("request-architecture", orchestratorApi.requestArchitectureChanges)}
                   >
                     <GitBranch className="size-4" />
                     Request Architecture Changes
@@ -185,7 +185,7 @@ export function OrchestratorWorkflowPage() {
                   <Button
                     variant="destructive"
                     disabled={Boolean(savingAction)}
-                    onClick={() => runAction("reject", orchestratorApi.reject.bind(orchestratorApi))}
+                    onClick={() => runAction("reject", orchestratorApi.reject)}
                   >
                     <X className="size-4" />
                     Reject

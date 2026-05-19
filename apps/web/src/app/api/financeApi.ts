@@ -1,3 +1,4 @@
+import { apiFetch } from "./client";
 import type {
   FinanceExpenseCategoryAmounts,
   FinanceExpenseCategoryPercents,
@@ -7,17 +8,6 @@ import type {
   FinanceIncomeYear,
   FinanceSettings
 } from "./types";
-
-type DataEnvelope<T> = {
-  data: T;
-};
-
-type ErrorEnvelope = {
-  error?: {
-    code?: string;
-    message?: string;
-  };
-};
 
 export type FinanceExpensePayload = {
   category_amounts: Partial<FinanceExpenseCategoryAmounts>;
@@ -35,75 +25,47 @@ export type FinanceSettingsPayload = {
   expense_limit_percents: Partial<FinanceExpenseCategoryPercents>;
 };
 
-export class FinanceApiError extends Error {
-  code: string;
-
-  constructor(code: string, message: string) {
-    super(message);
-    this.name = "FinanceApiError";
-    this.code = code;
-  }
+export function listExpenses(year: number): Promise<FinanceExpensesYear> {
+  return apiFetch<FinanceExpensesYear>(
+    `/api/v1/finance/expenses?year=${encodeURIComponent(String(year))}`
+  );
 }
 
-export class FinanceApi {
-  private readonly baseUrl: string;
+export function saveExpenseMonth(
+  year: number,
+  month: number,
+  payload: FinanceExpensePayload
+): Promise<FinanceExpenseMonth> {
+  return apiFetch<FinanceExpenseMonth>(`/api/v1/finance/expenses/${year}/${month}`, {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+}
 
-  constructor(apiBaseUrl: string) {
-    this.baseUrl = apiBaseUrl.replace(/\/$/, "");
-  }
+export function listIncome(year: number): Promise<FinanceIncomeYear> {
+  return apiFetch<FinanceIncomeYear>(
+    `/api/v1/finance/income?year=${encodeURIComponent(String(year))}`
+  );
+}
 
-  listExpenses(year: number): Promise<FinanceExpensesYear> {
-    return this.request<FinanceExpensesYear>(`/api/v1/finance/expenses?year=${encodeURIComponent(String(year))}`);
-  }
+export function saveIncomeMonth(
+  year: number,
+  month: number,
+  payload: FinanceIncomePayload
+): Promise<FinanceIncomeMonth> {
+  return apiFetch<FinanceIncomeMonth>(`/api/v1/finance/income/${year}/${month}`, {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+}
 
-  saveExpenseMonth(year: number, month: number, payload: FinanceExpensePayload): Promise<FinanceExpenseMonth> {
-    return this.request<FinanceExpenseMonth>(`/api/v1/finance/expenses/${year}/${month}`, {
-      method: "PUT",
-      body: JSON.stringify(payload)
-    });
-  }
+export function getSettings(): Promise<FinanceSettings> {
+  return apiFetch<FinanceSettings>("/api/v1/finance/settings");
+}
 
-  listIncome(year: number): Promise<FinanceIncomeYear> {
-    return this.request<FinanceIncomeYear>(`/api/v1/finance/income?year=${encodeURIComponent(String(year))}`);
-  }
-
-  saveIncomeMonth(year: number, month: number, payload: FinanceIncomePayload): Promise<FinanceIncomeMonth> {
-    return this.request<FinanceIncomeMonth>(`/api/v1/finance/income/${year}/${month}`, {
-      method: "PUT",
-      body: JSON.stringify(payload)
-    });
-  }
-
-  getSettings(): Promise<FinanceSettings> {
-    return this.request<FinanceSettings>("/api/v1/finance/settings");
-  }
-
-  saveSettings(payload: FinanceSettingsPayload): Promise<FinanceSettings> {
-    return this.request<FinanceSettings>("/api/v1/finance/settings", {
-      method: "PUT",
-      body: JSON.stringify(payload)
-    });
-  }
-
-  private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      ...init,
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        ...init.headers
-      }
-    });
-
-    const payload = (await response.json()) as DataEnvelope<T> & ErrorEnvelope;
-    if (!response.ok) {
-      throw new FinanceApiError(
-        payload.error?.code ?? "request_failed",
-        payload.error?.message ?? `Запрос завершился с ошибкой ${response.status}`
-      );
-    }
-
-    return payload.data;
-  }
+export function saveSettings(payload: FinanceSettingsPayload): Promise<FinanceSettings> {
+  return apiFetch<FinanceSettings>("/api/v1/finance/settings", {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
 }

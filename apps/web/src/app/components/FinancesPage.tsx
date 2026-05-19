@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { financeApi, FinanceApiError } from "../api";
+import { financeApi, ApiError } from "../api";
 import {
   financeExpenseCategoryCodes,
   type FinanceExpenseCategoryCode,
@@ -57,7 +57,7 @@ type IncomeGrid = Record<number, { salary_amount: string; bonus_percent: string 
 type LimitPercents = Partial<Record<FinanceExpenseCategoryCode, string>>;
 
 function describeError(error: unknown): string {
-  if (error instanceof FinanceApiError) return error.message;
+  if (error instanceof ApiError) return error.message;
   if (error instanceof Error) return error.message;
   return "Не удалось выполнить запрос";
 }
