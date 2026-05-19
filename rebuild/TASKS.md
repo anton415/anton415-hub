@@ -76,7 +76,7 @@ Plan ref: [§5](todo_hub_ai_first_rebuild_plan.md#5-phase-2-current-state-audit)
       PR title: `docs(audit): document problems and risks`
       PR: https://github.com/anton415/anton415-hub/pull/99
 
-- [ ] **2.3** `docs/audit/keep-remove-defer.md` — explicit decisions per area (code, config, infra).
+- [x] **2.3** `docs/audit/keep-remove-defer.md` — explicit decisions per area (code, config, infra).
       PR title: `docs(audit): document keep/remove/defer decisions`
       PR: _pending_
 
