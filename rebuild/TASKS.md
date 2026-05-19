@@ -45,7 +45,7 @@ Plan ref: [§4](todo_hub_ai_first_rebuild_plan.md#4-phase-1-scope-freeze)
       PR title: `docs(adr): add 0001 — focus on Todo only`
       PR: https://github.com/anton415/anton415-hub/pull/94
 
-- [ ] **1.3** Create ADR `docs/adr/0004-system-design-before-rebuild.md`
+- [x] **1.3** Create ADR `docs/adr/0004-system-design-before-rebuild.md`
       Content per spec §6.3: explain why System Design (Phase 3) gates major implementation work.
       PR title: `docs(adr): add 0004 — system design before rebuild`
       PR: _pending_
