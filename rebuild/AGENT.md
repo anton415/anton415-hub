@@ -46,7 +46,7 @@ Steps:
    - New branch name: `claude/<phase>-<task-id>-<short-slug>` (matches existing pattern from history).
    - PR title prefix per §15.6 of spec.
    - PR body: summary, link to AGENT.md / TASKS.md / phase section, test plan.
-6. Update `rebuild/TASKS.md` **in the same PR**: change `- [ ]` to `- [x]`, append PR URL on a sub-line with the merge date placeholder.
+6. Update `rebuild/TASKS.md` **in the same PR**: change `- [ ]` directly to `- [x]` and append the PR URL on a sub-line. **No intermediate `[~]` "PR open" state** — solo developer, no concurrency risk; the box flips once when the PR for the task is opened, and the URL is the record. Do not append `• open` / `• merged YYYY-MM-DD` decoration.
 7. **Stop. Do not auto-proceed to the next task.** Report the PR URL back to the user and wait.
 
 If the task requires human judgment (ADR content, scope calls, design decisions), produce a draft and stop for user review before pushing further changes.
