@@ -114,7 +114,7 @@ Do not mock the database in backend integration tests when a real Postgres is av
 - Prompts that the project depends on (review prompts, design briefs, Codex implementation prompts) live under `docs/prompts/`.
 - Retrospectives live under `docs/learning-log/` with `YYYY-MM-DD` prefixes.
 - Update docs **in the same PR** as the behavior change they describe. Stale docs are worse than missing docs.
-- Legacy documents listed in `rebuild/AGENT.md` §2 (`ANALYSIS.md`, `PLAN.md`, `CHANGELOG.md`, most of the current `docs/` tree) are slated for deletion in rebuild task 1.5. Do not extend or rely on them.
+- Legacy documents listed in `rebuild/AGENT.md` §2 (`ANALYSIS.md`, `PLAN.md`, `CHANGELOG.md`, and most of the pre-rebuild `docs/` tree) were removed in rebuild task 1.5. Do not recreate or rely on them; the Phase 0 snapshot in [`docs/audit/repo-map.md`](docs/audit/repo-map.md) records what was deleted.
 
 ---
 
