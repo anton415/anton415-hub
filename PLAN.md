@@ -133,7 +133,7 @@
 
 ### P2.2 Layout и shared конфигурация
 
-- [ ] 🔴 **P2.2.1** Создать `AppShell` layout и `shared/config/modules.ts`
+- [x] ✅ 🔴 **P2.2.1** Создать `AppShell` layout и `shared/config/modules.ts`
   - Файлы: новые `apps/web/src/app/layouts/AppShell.tsx`, `apps/web/src/shared/config/modules.ts`; рефакторинг 4 страниц
   - Источник: Critical Issue 2, Task T2
   - Acceptance: header единый, `modules` определён один раз, добавление 6-го модуля = правка только `modules.ts`

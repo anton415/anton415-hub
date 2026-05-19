@@ -12,15 +12,8 @@ import {
   Plus,
   CircleDot,
   MoreHorizontal,
-  LayoutDashboard,
-  CheckSquare,
-  Wallet,
-  TrendingUp,
-  Target,
-  Menu,
-  LogOut
+  Menu
 } from "lucide-react";
-import { Link, useNavigate } from "react-router";
 import { Checkbox } from "./ui/checkbox";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -56,7 +49,8 @@ import type {
   TodoTaskStatus,
   TodoView
 } from "../api/types";
-import { useAuthGate, logoutAndRedirect } from "../hooks/useAuthGate";
+import { useAuthGate } from "../hooks/useAuthGate";
+import { AppShell } from "../layouts/AppShell";
 
 type Scope =
   | { kind: "view"; view: TodoView }
@@ -150,17 +144,8 @@ function formatTaskDate(date: string | null): string | undefined {
   return parsed.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
 }
 
-const modules = [
-  { id: "tasks", name: "Задачи", icon: CheckSquare, path: "/tasks" },
-  { id: "finances", name: "Финансы", icon: Wallet, path: "/finances" },
-  { id: "investments", name: "Инвестиции", icon: TrendingUp, path: "/investments" },
-  { id: "fire", name: "FIRE", icon: Target, path: "/fire" },
-  { id: "calendar", name: "Календарь", icon: CalendarIcon, path: "/calendar" }
-];
-
 export function TasksPage() {
   const { status } = useAuthGate();
-  const navigate = useNavigate();
 
   const [projects, setProjects] = useState<TodoProject[]>([]);
   const [tasks, setTasks] = useState<TodoTask[]>([]);
@@ -587,65 +572,20 @@ export function TasksPage() {
     return <div className="flex items-center justify-center h-screen text-muted-foreground">Загрузка…</div>;
   }
 
+  const sidebarToggle = (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="md:hidden"
+      onClick={() => setIsMobileSidebarOpen(true)}
+      aria-label="Открыть меню"
+    >
+      <Menu className="size-5" />
+    </Button>
+  );
+
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 md:gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden"
-                onClick={() => setIsMobileSidebarOpen(true)}
-                aria-label="Открыть меню"
-              >
-                <Menu className="size-5" />
-              </Button>
-              <Link to="/" className="flex items-center gap-2 md:gap-3">
-                <div className="bg-primary text-primary-foreground p-1.5 md:p-2 rounded-lg">
-                  <LayoutDashboard className="size-5 md:size-6" />
-                </div>
-                <div className="hidden sm:block">
-                  <h1 className="text-lg md:text-xl">anton-hub</h1>
-                  <p className="text-xs md:text-sm text-muted-foreground">Личный центр управления</p>
-                </div>
-              </Link>
-            </div>
-
-            <div className="flex gap-1 md:gap-2 overflow-x-auto flex-1 justify-center">
-              {modules.map((module) => {
-                const Icon = module.icon;
-                const isActive = module.id === "tasks";
-                return (
-                  <Link key={module.id} to={module.path}>
-                    <Button
-                      variant={isActive ? "default" : "ghost"}
-                      size="sm"
-                      className="gap-1 md:gap-2 text-xs md:text-sm whitespace-nowrap h-8 md:h-9"
-                    >
-                      <Icon className="size-3 md:size-4" />
-                      <span className="hidden xs:inline">{module.name}</span>
-                    </Button>
-                  </Link>
-                );
-              })}
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="md:h-9"
-              onClick={() => logoutAndRedirect(navigate)}
-              aria-label="Выход"
-            >
-              <span className="hidden sm:inline">Выход</span>
-              <LogOut className="size-4 sm:hidden" aria-hidden="true" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <AppShell activeModuleId="tasks" fullHeight leftSlot={sidebarToggle}>
       <div className="flex flex-1 overflow-hidden">
         <aside className="hidden md:flex w-64 border-r bg-card p-4 flex-col overflow-y-auto">
           <SidebarContent />
@@ -1072,6 +1012,6 @@ export function TasksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AppShell>
   );
 }
