@@ -55,7 +55,7 @@ Plan ref: [§4](todo_hub_ai_first_rebuild_plan.md#4-phase-1-scope-freeze)
       PR title: `docs: rewrite README for Todo-only AI-first rebuild`
       PR: https://github.com/anton415/anton415-hub/pull/96
 
-- [ ] **1.5** Delete superseded documentation
+- [x] **1.5** Delete superseded documentation
       Delete: `ANALYSIS.md`, `PLAN.md`, `CHANGELOG.md`, `docs/specs/`, `docs/design/`, `docs/modules/`, `docs/architecture.md`, `docs/dev-setup.md`, `docs/roadmap.md`, `docs/migration.md`, `docs/production.md`, `docs/doc-inventory.md`, `docs/dependency-updates.md`, `docs/github-actions.md`, `docs/github-feature-ritual.md`, `docs/yandex-cost-estimate.md`.
       Verify each removal against `docs/audit/repo-map.md` (created in task 0.2) before deleting — anything not in the snapshot must be flagged, not deleted silently.
       PR title: `chore: remove superseded documentation (rebuild Phase 1)`
