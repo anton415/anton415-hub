@@ -21,13 +21,13 @@ Plan ref: [§3](todo_hub_ai_first_rebuild_plan.md#3-phase-0-preparation)
       Quality gates: N/A (docs-only).
       PR: https://github.com/anton415/anton415-hub/pull/91  •  open
 
-- [ ] **0.2** Create `docs/audit/repo-map.md`
+- [~] **0.2** Create `docs/audit/repo-map.md`
       Output: `docs/audit/repo-map.md`
       Inspect (do not modify): directory tree at depth 3, scripts (`Makefile`, `package.json`, Go entry points in `cmd/` or `apps/api/`), Todo-related files, non-Todo module files, current docs inventory (every file under `docs/` and root `*.md`), initial risk notes.
       PR title: `docs: add Phase 0 repository map (rebuild)`
       Acceptance: a fresh agent can read `repo-map.md` and locate the current Todo implementation without further exploration.
       Quality gates: N/A.
-      PR: _pending_
+      PR: _pending — branch `claude/0.2-repo-map`_
 
 ---
 
