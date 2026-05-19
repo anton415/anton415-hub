@@ -53,7 +53,7 @@ Plan ref: [§4](todo_hub_ai_first_rebuild_plan.md#4-phase-1-scope-freeze)
 - [x] **1.4** Rewrite `README.md` for the rebuild direction
       Replace current production status / marketing content with: rebuild summary, current phase (linked to TASKS.md), pointer to `rebuild/AGENT.md`, pointer to spec and plan, minimal "how to run locally" section.
       PR title: `docs: rewrite README for Todo-only AI-first rebuild`
-      PR: _pending_
+      PR: https://github.com/anton415/anton415-hub/pull/96
 
 - [ ] **1.5** Delete superseded documentation
       Delete: `ANALYSIS.md`, `PLAN.md`, `CHANGELOG.md`, `docs/specs/`, `docs/design/`, `docs/modules/`, `docs/architecture.md`, `docs/dev-setup.md`, `docs/roadmap.md`, `docs/migration.md`, `docs/production.md`, `docs/doc-inventory.md`, `docs/dependency-updates.md`, `docs/github-actions.md`, `docs/github-feature-ritual.md`, `docs/yandex-cost-estimate.md`.
