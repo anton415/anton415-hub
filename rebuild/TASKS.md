@@ -72,9 +72,9 @@ Plan ref: [§5](todo_hub_ai_first_rebuild_plan.md#5-phase-2-current-state-audit)
       PR title: `docs(audit): document current state`
       PR: https://github.com/anton415/anton415-hub/pull/98
 
-- [ ] **2.2** `docs/audit/problems.md` — failures, AI-readability blockers, technical risks.
+- [x] **2.2** `docs/audit/problems.md` — failures, AI-readability blockers, technical risks.
       PR title: `docs(audit): document problems and risks`
-      PR: _pending_
+      PR: https://github.com/anton415/anton415-hub/pull/99
 
 - [ ] **2.3** `docs/audit/keep-remove-defer.md` — explicit decisions per area (code, config, infra).
       PR title: `docs(audit): document keep/remove/defer decisions`
