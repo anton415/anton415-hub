@@ -48,7 +48,7 @@ Plan ref: [§4](todo_hub_ai_first_rebuild_plan.md#4-phase-1-scope-freeze)
 - [x] **1.3** Create ADR `docs/adr/0004-system-design-before-rebuild.md`
       Content per spec §6.3: explain why System Design (Phase 3) gates major implementation work.
       PR title: `docs(adr): add 0004 — system design before rebuild`
-      PR: _pending_
+      PR: https://github.com/anton415/anton415-hub/pull/95
 
 - [ ] **1.4** Rewrite `README.md` for the rebuild direction
       Replace current production status / marketing content with: rebuild summary, current phase (linked to TASKS.md), pointer to `rebuild/AGENT.md`, pointer to spec and plan, minimal "how to run locally" section.
