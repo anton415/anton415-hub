@@ -40,10 +40,10 @@ Plan ref: [§4](todo_hub_ai_first_rebuild_plan.md#4-phase-1-scope-freeze)
       Acceptance: a fresh agent reading only `AI.md` understands Todo-only scope and forbidden actions.
       PR: https://github.com/anton415/anton415-hub/pull/93
 
-- [ ] **1.2** Create ADR `docs/adr/0001-focus-on-todo-only.md`
+- [x] **1.2** Create ADR `docs/adr/0001-focus-on-todo-only.md`
       Content: Status (Accepted), Context, Decision (Todo only; Finance/Calendar/Orchestrator/Investments/FIRE frozen and to be removed in Phase 7), Consequences, Alternatives.
       PR title: `docs(adr): add 0001 — focus on Todo only`
-      PR: _pending_
+      PR: https://github.com/anton415/anton415-hub/pull/94
 
 - [ ] **1.3** Create ADR `docs/adr/0004-system-design-before-rebuild.md`
       Content per spec §6.3: explain why System Design (Phase 3) gates major implementation work.
