@@ -2,7 +2,7 @@
 
 > Read this together with [`rebuild/AGENT.md`](../../rebuild/AGENT.md), [`rebuild/TASKS.md`](../../rebuild/TASKS.md), and the Phase 0 snapshot in [`docs/audit/repo-map.md`](repo-map.md).
 > Snapshot date: 2026-05-19.
-> Scope: this document is **descriptive** — it records the behavior of the system as it stands at the start of the rebuild. Problems, risks, keep/remove/defer decisions, and technical-debt items live in [`problems.md`](problems.md), [`keep-remove-defer.md`](keep-remove-defer.md), and [`technical-debt.md`](technical-debt.md) (tasks 2.2–2.4).
+> Scope: this document is **descriptive** — it records the behavior of the system as it stands at the start of the rebuild. Problems, risks, keep/remove/defer decisions, and technical-debt items live in `problems.md`, `keep-remove-defer.md`, and `technical-debt.md` (tasks 2.2–2.4, to be created in follow-up PRs).
 
 ---
 
@@ -127,16 +127,16 @@ Auth implementation: [`internal/auth/`](../../internal/auth/). Wiring: [`interna
 
 ### 3.1 Surface
 
-Mounted at `/api/v1/auth/` ([`internal/auth/adapters/http/handler.go:48-58`](../../internal/auth/adapters/http/handler.go:48)):
+OAuth and email routes are mounted at `/api/v1/auth/` ([`internal/auth/adapters/http/handler.go:48-58`](../../internal/auth/adapters/http/handler.go:48)). `/me` is mounted directly under `/api/v1/` inside the session-middleware group ([`router.go:115`](../../internal/platform/http/router.go:115)).
 
 | Method | Path | Purpose |
 |---|---|---|
-| `GET` | `/providers` | List configured OAuth providers |
-| `GET` | `/{provider}/start` | Begin OAuth flow (issues `state`, redirects to provider) |
-| `GET` | `/{provider}/callback` | OAuth callback — exchanges code, creates session, sets cookie, redirects |
-| `POST` | `/email/start` | Magic-link login (SMTP) |
-| `GET` | `/email/verify` | Magic-link verification |
-| `POST` | `/logout` | Revoke session cookie |
+| `GET` | `/api/v1/auth/providers` | List configured OAuth providers |
+| `GET` | `/api/v1/auth/{provider}/start` | Begin OAuth flow (issues `state`, redirects to provider) |
+| `GET` | `/api/v1/auth/{provider}/callback` | OAuth callback — exchanges code, creates session, sets cookie, redirects |
+| `POST` | `/api/v1/auth/email/start` | Magic-link login (SMTP) |
+| `GET` | `/api/v1/auth/email/verify` | Magic-link verification |
+| `POST` | `/api/v1/auth/logout` | Revoke session cookie |
 | `GET` | `/api/v1/me` | Return current `Principal` or `{ authenticated: false }` |
 
 `SessionMiddleware` reads the session cookie, hashes it, looks up an active `auth_sessions` row, and attaches a `Principal{ Email, Provider }` to the context. `RequireAuthenticated` returns `401` when no principal is present.
