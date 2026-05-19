@@ -1,153 +1,56 @@
-# anton415 Hub
+# anton415-hub
 
-[![CI](https://github.com/anton415/anton415-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/anton415/anton415-hub/actions/workflows/ci.yml)
-[![Deploy Production](https://github.com/anton415/anton415-hub/actions/workflows/deploy.yml/badge.svg)](https://github.com/anton415/anton415-hub/actions/workflows/deploy.yml)
-[![Release](https://img.shields.io/github/v/release/anton415/anton415-hub?display_name=tag&sort=semver)](https://github.com/anton415/anton415-hub/releases)
-[![Go 1.25](https://img.shields.io/badge/Go-1.25-00ADD8)](https://go.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6)](https://www.typescriptlang.org/)
+`anton415-hub` is a personal productivity monorepo undergoing a **Todo-only AI-first rebuild**.
 
-`anton415-hub` is the anton415 Hub monorepo: a modular Go and TypeScript application for private productivity, finance, investments, and FIRE planning.
+Production lives at [anton415.ru](https://anton415.ru) (Yandex ID auth, single-owner). It must stay runnable throughout the rebuild; module removals and the backend move to `server/` happen only in Phase 7, behind an explicit refactor plan.
 
-The production app is live at [anton415.ru](https://anton415.ru), protected by Yandex ID and a single-owner email allowlist. The current release includes private Todo workflows and the first monthly Finance slice.
+## Rebuild direction
 
-## Production Status
+- **Active module:** Todo (only).
+- **Frozen modules:** Finance, Calendar, Orchestrator, Investments, FIRE. Code is preserved for now and will be removed in Phase 7 per the Phase 6 refactor plan. PostgreSQL migrations are kept in `migrations/` for potential restore.
+- **Out of scope:** News, AI chat, any new module.
 
-| Area | Status |
-| --- | --- |
-| Runtime | Go API and Vite frontend in one Docker image |
-| Hosting | Yandex Cloud VM, Caddy HTTPS, Cloud DNS |
-| Database | PostgreSQL 16 in Docker on the VM |
-| Auth | Yandex ID, server-side sessions, `HttpOnly` secure cookies |
-| Data model | Single-owner Todo and Finance data; production rejects multiple allowlist emails until `user_id` isolation exists |
-| Backups | Budget-first monthly `pg_dump` path to Object Storage |
-| Email login | Planned later; Postbox is intentionally deferred |
+Binding scope and architecture decisions live in [`rebuild/todo_hub_ai_first_rebuild_spec.md`](rebuild/todo_hub_ai_first_rebuild_spec.md) §15.
 
-## Product Modules
+## Documentation
 
-| Module | Current scope |
-| --- | --- |
-| `todo` | Production Todo projects/tasks with browser UI and authenticated REST API |
-| `finance` | Monthly RUB income and expense facts with browser UI and authenticated REST API |
-| `investments` | Planned investment tracking and analysis boundary |
-| `fire` | Planned FIRE progress and long-term planning boundary |
+- **AI agents start here:** [`rebuild/AGENT.md`](rebuild/AGENT.md) — cold-start workflow and forbidden actions.
+- **Working rules:** [`AI.md`](AI.md).
+- **Rebuild spec:** [`rebuild/todo_hub_ai_first_rebuild_spec.md`](rebuild/todo_hub_ai_first_rebuild_spec.md) — what must be true.
+- **Rebuild plan:** [`rebuild/todo_hub_ai_first_rebuild_plan.md`](rebuild/todo_hub_ai_first_rebuild_plan.md) — phased methodology.
+- **Current phase and progress:** [`rebuild/TASKS.md`](rebuild/TASKS.md) — one checked box per merged PR.
+- **Architecture decisions:** [`docs/adr/`](docs/adr/).
+- **Repository snapshot (Phase 0):** [`docs/audit/repo-map.md`](docs/audit/repo-map.md).
 
-The repository is intentionally a modular monolith. Separate services or repositories are introduced only when an operational boundary becomes real.
+GitHub Wiki pages are drafted in Phase 9 and are not yet published.
 
-## Architecture
+## How to run locally
 
-```text
-Browser
-  |
-  | HTTPS
-  v
-Caddy
-  |
-  v
-Go API + static web bundle
-  |
-  v
-PostgreSQL 16 in Docker
-```
-
-Core paths:
-
-```text
-apps/api/              Go API entrypoint
-apps/web/              Vite TypeScript frontend
-internal/auth/         OAuth, email token, allowlist, session logic
-internal/todo/         Todo domain, use cases, HTTP and PostgreSQL adapters
-internal/finance/      Finance domain, use cases, HTTP and PostgreSQL adapters
-internal/platform/     Config, database, router, logging
-migrations/            SQL migrations
-infra/terraform/       Yandex Cloud production infrastructure
-deploy/                VM compose, Caddy, backup, and Lockbox helpers
-docs/                  Architecture, production, roadmap, and operations notes
-```
-
-## Local Development
-
-Prerequisites:
-
-- Docker Compose
-- Go 1.25, or Docker fallback through `Makefile`
-- Node.js 22-24 with npm 10+ for frontend work
+Prerequisites: Docker Compose, Go 1.25, Node.js 22+ with npm 10+.
 
 ```sh
 cp .env.example .env
 make dev
 ```
 
-Local URLs:
+That brings up PostgreSQL, applies migrations, starts the Go API, and serves the Vite frontend at <http://localhost:5173>. The API listens on <http://localhost:8080>.
 
-| Surface | URL |
-| --- | --- |
-| Web app | `http://localhost:5173` |
-| Todo UI | `http://localhost:5173/todo` |
-| Finance expenses | `http://localhost:5173/finance/expenses` |
-| Finance income | `http://localhost:5173/finance/income` |
-| API health | `http://localhost:8080/health` |
-| Session check | `http://localhost:8080/api/v1/me` |
-| PostgreSQL | `localhost:15432` |
-
-Useful commands:
+Other useful targets:
 
 ```sh
-make dev          # start Postgres, migrations, API, and web shell
-make api          # start Postgres and API
-make web          # start the Vite web shell
-make stop         # stop local Docker services
-make lint         # Go format/vet and frontend typecheck
-make test         # Go and frontend unit tests
-make build        # backend and frontend production build
-make docker-build # local production container build
+make stop     # stop local Docker services
+make test     # Go and frontend unit tests
+make lint     # Go vet/format and frontend typecheck
+make build    # backend and frontend production build
 ```
 
-Real local API + PostgreSQL smoke:
+The full set of local commands and surfaces is being rewritten as part of the rebuild; this section will be expanded once Phase 7 lands the new layout (`server/`, `packages/domain`, `packages/ui`, `packages/config`, `apps/web`).
 
-```sh
-scripts/todo-integration-smoke.sh
-```
+## Contributing
 
-## CI/CD
+This repository is single-owner. PRs from AI agents follow [`rebuild/AGENT.md`](rebuild/AGENT.md):
 
-Pull requests and `main` run:
-
-- Go formatting, vet, tests, and build
-- Frontend typecheck, unit tests, build, and Playwright smoke
-- Production Docker image build for `linux/amd64`
-
-Production deploys run through [Deploy Production](https://github.com/anton415/anton415-hub/actions/workflows/deploy.yml), either manually or from a published GitHub Release. The workflow builds and pushes a `linux/amd64` image to Yandex Container Registry, runs migrations on the VM, recreates the app/Caddy containers, and checks `/health`.
-
-Deployment requires GitHub environment approval and repository secrets. Details live in [docs/github-actions.md](docs/github-actions.md).
-
-## Production Operations
-
-The production runbook is [docs/production.md](docs/production.md). The short version:
-
-```sh
-curl -fsS https://anton415.ru/health
-```
-
-Important operating rules:
-
-- Do not commit `.env`, `*.tfvars`, service-account keys, SSH private keys, or Lockbox payload files.
-- Review Terraform plans before applying anything that creates or changes paid Yandex resources.
-- Keep Postbox disabled until email magic-link login is worth the extra setup and cost.
-- Treat the VM disk as the first recovery line and Object Storage dumps as the independent fallback.
-
-## Documentation
-
-- [Architecture](docs/architecture.md)
-- [Development setup](docs/dev-setup.md)
-- [GitHub Actions](docs/github-actions.md)
-- [Dependency updates](docs/dependency-updates.md)
-- [Production runbook](docs/production.md)
-- [Roadmap](docs/roadmap.md)
-- [Yandex cost estimate](docs/yandex-cost-estimate.md)
-- [Changelog](CHANGELOG.md)
-
-## Release
-
-Current release target: `v0.2.1`, Finance polish for limit persistence and personal finance UI cleanup.
-
-Release notes are tracked in [CHANGELOG.md](CHANGELOG.md), and GitHub Releases trigger the production deployment workflow after environment approval.
+- One unchecked task in `rebuild/TASKS.md` = one PR.
+- Conventional commit prefixes: `docs:`, `refactor:`, `feat(todo):`, `test(todo):`, `chore:`.
+- No `--no-verify`, no force-push, no destructive git operations.
+- Touching `deploy/`, `migrations/`, `Dockerfile`, `docker-compose.yml`, `Caddyfile`, or `.github/workflows/` requires explicit per-PR approval.
