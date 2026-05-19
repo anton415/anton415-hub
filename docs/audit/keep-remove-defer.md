@@ -47,9 +47,9 @@ If a decision below conflicts with `rebuild/AGENT.md` or §15 of the spec, **AGE
 
 | Area | Verdict | Phase | Note |
 |---|---|---|---|
-| [`internal/auth/domain/`](../../internal/auth/domain/), [`application/`](../../internal/auth/application/) | **Keep** | — | Auth is explicitly out of scope (`AGENT.md` §2). |
+| [`internal/auth/service.go`](../../internal/auth/service.go), [`smtp_sender.go`](../../internal/auth/smtp_sender.go) | **Keep** | — | Auth is explicitly out of scope (`AGENT.md` §2). |
 | [`internal/auth/adapters/http/`](../../internal/auth/adapters/http/) — providers handler, rate limiter, session middleware | **Keep** | — | Production path. Same applies. |
-| [`internal/auth/adapters/postgres/`](../../internal/auth/adapters/postgres/) | **Keep** | — | Schema lives in `migrations/000003_create_auth`. Untouched. |
+| [`internal/auth/adapters/postgres/repository.go`](../../internal/auth/adapters/postgres/repository.go) | **Keep** | — | Schema lives in `migrations/000003_create_auth`. Untouched. |
 | Yandex ID provider | **Keep** | — | Production users authenticate here. |
 | GitHub OAuth provider wiring | **Defer** | — | Wired in [`router.go:151-185`](../../internal/platform/http/router.go), not used in production ([`problems.md` §2.8](problems.md)). Removal would be an auth-surface change; this rebuild does not touch auth. Recorded for a future cleanup pass. |
 | VK ID OAuth provider wiring | **Defer** | — | Same rationale as GitHub. |
