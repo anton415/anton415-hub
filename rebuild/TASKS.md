@@ -14,12 +14,12 @@
 
 Plan ref: [§3](todo_hub_ai_first_rebuild_plan.md#3-phase-0-preparation)
 
-- [ ] **0.1** Commit rebuild source-of-truth files to the repository
+- [~] **0.1** Commit rebuild source-of-truth files to the repository
       Output: `rebuild/AGENT.md`, `rebuild/TASKS.md`, `rebuild/todo_hub_ai_first_rebuild_spec.md`, `rebuild/todo_hub_ai_first_rebuild_plan.md`
       PR title: `docs: add Todo-only AI-first rebuild source documents`
       Acceptance: `rebuild/` is checked in on `main`; `AGENT.md` is the documented entry point.
       Quality gates: N/A (docs-only).
-      PR: _pending_
+      PR: https://github.com/anton415/anton415-hub/pull/91  •  open
 
 - [ ] **0.2** Create `docs/audit/repo-map.md`
       Output: `docs/audit/repo-map.md`
