@@ -116,7 +116,7 @@
 
 ### P2.1 Единый API-слой
 
-- [ ] 🔴 **P2.1.1** Создать `shared/api/client.ts` с `apiFetch<T>` и централизованным 401-handling
+- [x] ✅ 🔴 **P2.1.1** Создать `shared/api/client.ts` с `apiFetch<T>` и централизованным 401-handling
   - Файлы: новый `apps/web/src/app/api/client.ts`, рефакторинг `authApi.ts`/`todoApi.ts`/`financeApi.ts`/`orchestratorApi.ts` в наборы free-функций
   - Источник: Critical Issue 5, Task T3
   - Acceptance: одна реализация request, 401 → редирект на /login, существующие flows работают
