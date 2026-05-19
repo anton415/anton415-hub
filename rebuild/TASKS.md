@@ -60,7 +60,7 @@ Plan ref: [§4](todo_hub_ai_first_rebuild_plan.md#4-phase-1-scope-freeze)
       Verify each removal against `docs/audit/repo-map.md` (created in task 0.2) before deleting — anything not in the snapshot must be flagged, not deleted silently.
       PR title: `chore: remove superseded documentation (rebuild Phase 1)`
       Acceptance: under `docs/` only `audit/` and `adr/` remain (plus any folder created so far in this rebuild).
-      PR: _pending_
+      PR: https://github.com/anton415/anton415-hub/pull/97
 
 ---
 
