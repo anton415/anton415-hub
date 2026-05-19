@@ -1,16 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  LayoutDashboard,
-  CheckSquare,
-  Wallet,
-  TrendingUp,
-  Target,
-  Calendar as CalendarIcon,
-  LogOut,
-  ChevronLeft,
-  ChevronRight
-} from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
@@ -28,7 +17,8 @@ import {
   formatRussianDecimal,
   normalizeDecimalInputOrRaw
 } from "../api/financeFormat";
-import { useAuthGate, logoutAndRedirect } from "../hooks/useAuthGate";
+import { useAuthGate } from "../hooks/useAuthGate";
+import { AppShell } from "../layouts/AppShell";
 
 const categoryShort: Record<FinanceExpenseCategoryCode, string> = {
   restaurants: "Рест.",
@@ -43,14 +33,6 @@ const categoryShort: Record<FinanceExpenseCategoryCode, string> = {
 };
 
 const monthNames = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
-
-const modules = [
-  { id: "tasks", name: "Задачи", icon: CheckSquare, path: "/tasks" },
-  { id: "finances", name: "Финансы", icon: Wallet, path: "/finances" },
-  { id: "investments", name: "Инвестиции", icon: TrendingUp, path: "/investments" },
-  { id: "fire", name: "FIRE", icon: Target, path: "/fire" },
-  { id: "calendar", name: "Календарь", icon: CalendarIcon, path: "/calendar" }
-];
 
 type ExpenseGrid = Record<number, Partial<Record<FinanceExpenseCategoryCode, string>>>;
 type IncomeGrid = Record<number, { salary_amount: string; bonus_percent: string }>;
@@ -95,7 +77,6 @@ function formatAmount(value: string | undefined): string {
 
 export function FinancesPage() {
   const { status } = useAuthGate();
-  const navigate = useNavigate();
 
   const [year, setYear] = useState(new Date().getFullYear());
   const [activeTab, setActiveTab] = useState("expenses");
@@ -251,52 +232,7 @@ export function FinancesPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-4">
-            <Link to="/" className="flex items-center gap-2 md:gap-3">
-              <div className="bg-primary text-primary-foreground p-1.5 md:p-2 rounded-lg">
-                <LayoutDashboard className="size-5 md:size-6" />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-lg md:text-xl">anton-hub</h1>
-                <p className="text-xs md:text-sm text-muted-foreground">Личный центр управления</p>
-              </div>
-            </Link>
-
-            <div className="flex gap-1 md:gap-2 overflow-x-auto flex-1 justify-center">
-              {modules.map((module) => {
-                const Icon = module.icon;
-                const isActive = module.id === "finances";
-                return (
-                  <Link key={module.id} to={module.path}>
-                    <Button
-                      variant={isActive ? "default" : "ghost"}
-                      size="sm"
-                      className="gap-1 md:gap-2 text-xs md:text-sm whitespace-nowrap h-8 md:h-9"
-                    >
-                      <Icon className="size-3 md:size-4" />
-                      <span className="hidden xs:inline">{module.name}</span>
-                    </Button>
-                  </Link>
-                );
-              })}
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="md:h-9"
-              onClick={() => logoutAndRedirect(navigate)}
-            >
-              <span className="hidden sm:inline">Выход</span>
-              <LogOut className="size-4 sm:hidden" aria-hidden="true" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <AppShell activeModuleId="finances" fullHeight>
       <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6">
         <div className="px-1 sm:px-2 md:px-4">
           <div className="mb-4 sm:mb-6 w-full">
@@ -569,6 +505,6 @@ export function FinancesPage() {
           </div>
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }

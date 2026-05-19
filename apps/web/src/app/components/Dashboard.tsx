@@ -1,96 +1,20 @@
-import { LayoutDashboard, CheckSquare, Wallet, TrendingUp, Calendar, Target, Workflow } from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { useAuthGate, logoutAndRedirect } from "../hooks/useAuthGate";
+import { useAuthGate } from "../hooks/useAuthGate";
+import { AppShell } from "../layouts/AppShell";
+import { modules } from "../../shared/config/modules";
 
 export function Dashboard() {
   const { status } = useAuthGate();
-  const navigate = useNavigate();
-
-  const modules = [
-    {
-      id: "tasks",
-      title: "Задачи",
-      description: "Управление задачами и проектами",
-      icon: CheckSquare,
-      status: "active",
-      color: "bg-chart-1",
-      path: "/tasks"
-    },
-    {
-      id: "finances",
-      title: "Личные финансы",
-      description: "Учет доходов и расходов",
-      icon: Wallet,
-      status: "active",
-      color: "bg-chart-2",
-      path: "/finances"
-    },
-    {
-      id: "investments",
-      title: "Инвестиции",
-      description: "Портфель и аналитика",
-      icon: TrendingUp,
-      status: "coming-soon",
-      color: "bg-chart-3",
-      path: "/investments"
-    },
-    {
-      id: "fire",
-      title: "FIRE дашбоард",
-      description: "Отслеживание прогресса к финансовой независимости",
-      icon: Target,
-      status: "coming-soon",
-      color: "bg-chart-4",
-      path: "/fire"
-    },
-    {
-      id: "calendar",
-      title: "Календарь",
-      description: "Планирование и события",
-      icon: Calendar,
-      status: "coming-soon",
-      color: "bg-chart-5",
-      path: "/calendar"
-    },
-    {
-      id: "orchestrator",
-      title: "AI Orchestrator",
-      description: "Workflow для AI-разработки",
-      icon: Workflow,
-      status: "active",
-      color: "bg-primary",
-      path: "/orchestrator"
-    }
-  ];
 
   if (status === "loading") {
     return <div className="flex items-center justify-center h-screen text-muted-foreground">Загрузка…</div>;
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-                <LayoutDashboard className="size-6" />
-              </div>
-              <div>
-                <h1 className="text-xl">anton-hub</h1>
-                <p className="text-sm text-muted-foreground">Личный центр управления</p>
-              </div>
-            </div>
-            <Button variant="outline" onClick={() => logoutAndRedirect(navigate)}>
-              Выход
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <AppShell>
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h2 className="mb-2">Модули</h2>
@@ -135,6 +59,6 @@ export function Dashboard() {
           })}
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }
