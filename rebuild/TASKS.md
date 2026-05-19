@@ -68,9 +68,9 @@ Plan ref: [§4](todo_hub_ai_first_rebuild_plan.md#4-phase-1-scope-freeze)
 
 Plan ref: [§5](todo_hub_ai_first_rebuild_plan.md#5-phase-2-current-state-audit)
 
-- [ ] **2.1** `docs/audit/current-state.md` — what works today (Todo flows, auth, persistence, build, deploy).
+- [x] **2.1** `docs/audit/current-state.md` — what works today (Todo flows, auth, persistence, build, deploy).
       PR title: `docs(audit): document current state`
-      PR: _pending_
+      PR: https://github.com/anton415/anton415-hub/pull/98
 
 - [ ] **2.2** `docs/audit/problems.md` — failures, AI-readability blockers, technical risks.
       PR title: `docs(audit): document problems and risks`
